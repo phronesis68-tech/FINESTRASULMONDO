@@ -1,0 +1,2250 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bottega Una finestra sul mondo — GuineAction ODV</title>
+<style>
+/* ==========================================================================
+   BOTTEGA "UNA FINESTRA SUL MONDO" — GuineAction ODV
+   Prototipo per PC, responsivo, base per la futura app Android.
+   Nessuna libreria esterna: il file funziona anche senza connessione.
+   ========================================================================== */
+
+:root{
+  --inchiostro:#16233F;      /* indaco: colore delle tinture dei tessuti */
+  --inchiostro-2:#22355C;
+  --inchiostro-3:#33497A;
+  --carta:#EEF1F5;
+  --bianco:#FFFFFF;
+  --bordo:#D6DCE6;
+  --bordo-forte:#B9C3D2;
+  --testo:#16233F;
+  --tenue:#5D6A84;
+  --oro:#B5810F;
+  --oro-chiaro:#FAEFD6;
+  --verde:#2C7A5B;
+  --verde-chiaro:#E3F1EA;
+  --rosso:#A6362D;
+  --rosso-chiaro:#FBE7E4;
+  --ambra:#8A6100;
+  --ambra-chiaro:#FDF0D2;
+  --ombra:0 1px 2px rgba(22,35,63,.08), 0 4px 12px rgba(22,35,63,.06);
+  --raggio:10px;
+  --raggio-s:6px;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:"Segoe UI Variable Text","Segoe UI",Roboto,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  background:var(--carta);
+  color:var(--testo);
+  font-size:16px;
+  line-height:1.5;
+  -webkit-text-size-adjust:100%;
+}
+/* Cifre allineate in colonna: è un registro, i numeri devono incolonnarsi */
+input[type=number],.num,.tabella td,.tabella th,.importo,.quantita{
+  font-variant-numeric:tabular-nums;
+  font-feature-settings:"tnum" 1;
+}
+h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.01em;}
+h1{font-size:1.5rem;}
+h2{font-size:1.15rem;}
+h3{font-size:1rem;}
+p{margin:0 0 .75rem;}
+a{color:var(--inchiostro-3);}
+
+/* ---------- impalcatura ------------------------------------------------ */
+#app{display:flex;min-height:100vh;flex-direction:column;}
+
+header.testata{
+  background:var(--inchiostro);
+  color:#fff;
+  padding:.7rem 1rem;
+  display:flex;align-items:center;gap:.75rem;
+  position:sticky;top:0;z-index:40;
+}
+header.testata .marchio{font-weight:600;font-size:1.02rem;line-height:1.2;}
+header.testata .marchio span{display:block;font-size:.74rem;font-weight:400;opacity:.72;}
+header.testata .spazio{flex:1;}
+header.testata .versione{font-size:.72rem;opacity:.6;}
+.badge-dispositivo{
+  font-size:.72rem;background:rgba(255,255,255,.14);
+  padding:.2rem .55rem;border-radius:99px;white-space:nowrap;
+}
+
+nav.menu{background:var(--inchiostro-2);}
+nav.menu ul{list-style:none;margin:0;padding:0;display:flex;overflow-x:auto;}
+nav.menu li{flex:0 0 auto;}
+nav.menu button{
+  background:none;border:0;color:rgba(255,255,255,.8);
+  padding:.7rem .9rem;font-size:.87rem;cursor:pointer;
+  font-family:inherit;white-space:nowrap;
+  border-bottom:3px solid transparent;
+}
+nav.menu button:hover{color:#fff;background:rgba(255,255,255,.06);}
+nav.menu button[aria-current="page"]{color:#fff;border-bottom-color:var(--oro);}
+nav.menu .pallino{
+  display:inline-block;min-width:18px;height:18px;line-height:18px;
+  background:var(--oro);color:var(--inchiostro);border-radius:99px;
+  font-size:.7rem;font-weight:700;margin-left:.35rem;padding:0 4px;
+}
+
+main{flex:1;padding:1rem;max-width:1180px;width:100%;margin:0 auto;}
+
+/* ---------- blocchi ---------------------------------------------------- */
+.riquadro{
+  background:var(--bianco);border:1px solid var(--bordo);
+  border-radius:var(--raggio);padding:1rem;margin-bottom:1rem;
+}
+.riquadro > h2{margin-bottom:.25rem;}
+.riquadro > .sottotitolo{color:var(--tenue);font-size:.87rem;margin-bottom:.9rem;}
+
+.intestazione-vista{display:flex;align-items:flex-start;gap:1rem;margin-bottom:1rem;flex-wrap:wrap;}
+.intestazione-vista .testo{flex:1;min-width:220px;}
+.intestazione-vista .testo p{color:var(--tenue);font-size:.9rem;margin:.15rem 0 0;}
+
+/* stato della bottega in apertura */
+.stato{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;
+  background:var(--bordo);border:1px solid var(--bordo);border-radius:var(--raggio);
+  overflow:hidden;margin-bottom:1rem;}
+.stato div{background:var(--bianco);padding:.85rem 1rem;}
+.stato .cifra{font-size:1.7rem;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums;}
+.stato .voce{font-size:.8rem;color:var(--tenue);}
+.stato .avviso .cifra{color:var(--rosso);}
+
+/* ---------- controlli --------------------------------------------------- */
+button,.bottone{
+  font-family:inherit;font-size:.92rem;cursor:pointer;
+  border-radius:var(--raggio-s);border:1px solid var(--bordo-forte);
+  background:var(--bianco);color:var(--testo);
+  padding:.5rem .85rem;
+}
+button:hover{background:#F5F7FA;}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+  outline:2px solid var(--inchiostro-3);outline-offset:2px;
+}
+button.primario{background:var(--inchiostro);border-color:var(--inchiostro);color:#fff;font-weight:500;}
+button.primario:hover{background:var(--inchiostro-2);}
+button.pericolo{background:var(--rosso-chiaro);border-color:#E4B5B0;color:var(--rosso);}
+button.grande{padding:.8rem 1.1rem;font-size:1rem;}
+button.piccolo{padding:.3rem .55rem;font-size:.8rem;}
+button[disabled]{opacity:.45;cursor:not-allowed;}
+.azioni{display:flex;gap:.5rem;flex-wrap:wrap;}
+.azioni-fine{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:flex-end;margin-top:1rem;}
+
+label{display:block;font-size:.83rem;color:var(--tenue);margin-bottom:.25rem;}
+input,select,textarea{
+  font-family:inherit;font-size:.95rem;width:100%;
+  padding:.5rem .6rem;border:1px solid var(--bordo-forte);
+  border-radius:var(--raggio-s);background:var(--bianco);color:var(--testo);
+}
+textarea{min-height:70px;resize:vertical;}
+.campo{margin-bottom:.85rem;}
+.griglia{display:grid;gap:.85rem;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));}
+.griglia-2{display:grid;gap:.85rem;grid-template-columns:1fr 1fr;}
+.aiuto{font-size:.78rem;color:var(--tenue);margin-top:.25rem;}
+fieldset{border:1px solid var(--bordo);border-radius:var(--raggio-s);padding:.85rem;margin:0 0 .85rem;}
+legend{font-size:.83rem;color:var(--tenue);padding:0 .35rem;}
+
+/* scelta modalità di uscita */
+.scelte{display:grid;gap:.6rem;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));}
+.scelta{
+  border:1px solid var(--bordo-forte);border-radius:var(--raggio-s);
+  padding:.7rem .8rem;cursor:pointer;background:var(--bianco);text-align:left;
+}
+.scelta strong{display:block;font-size:.95rem;}
+.scelta small{color:var(--tenue);font-size:.78rem;line-height:1.35;display:block;margin-top:.15rem;}
+.scelta[aria-pressed="true"]{border-color:var(--inchiostro);background:#F4F7FC;box-shadow:inset 0 0 0 1px var(--inchiostro);}
+
+/* ---------- elenco articoli -------------------------------------------- */
+.barra-filtri{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.9rem;align-items:flex-end;}
+.barra-filtri .campo{margin:0;flex:1;min-width:150px;}
+
+.elenco{display:grid;gap:.6rem;}
+.articolo{
+  display:flex;gap:.8rem;align-items:stretch;
+  background:var(--bianco);border:1px solid var(--bordo);
+  border-left:4px solid var(--bordo-forte);
+  border-radius:var(--raggio-s);padding:.6rem;cursor:pointer;text-align:left;
+  width:100%;font-family:inherit;font-size:1rem;
+}
+.articolo:hover{background:#F8FAFC;}
+.articolo.unico{border-left-color:var(--oro);}
+.articolo.esaurito{opacity:.55;}
+.articolo .foto{
+  width:66px;height:66px;flex:0 0 66px;border-radius:var(--raggio-s);
+  background:var(--carta) center/cover no-repeat;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--bordo-forte);font-size:1.5rem;
+}
+.articolo .corpo{flex:1;min-width:0;}
+.articolo .titolo{font-weight:600;font-size:.98rem;}
+.articolo .dettagli{font-size:.8rem;color:var(--tenue);margin-top:.1rem;}
+.articolo .codice{font-variant-numeric:tabular-nums;letter-spacing:.02em;
+  color:var(--inchiostro-3);font-weight:600;}
+.articolo .destra{text-align:right;flex:0 0 auto;display:flex;flex-direction:column;justify-content:center;gap:.2rem;}
+.articolo .offerta{font-weight:600;font-variant-numeric:tabular-nums;}
+.articolo .giacenza{font-size:.8rem;color:var(--tenue);font-variant-numeric:tabular-nums;}
+
+.etichetta{
+  display:inline-block;font-size:.72rem;padding:.1rem .45rem;border-radius:var(--raggio-s);
+  border:1px solid transparent;vertical-align:middle;
+}
+.et-unico{background:var(--oro-chiaro);color:var(--ambra);border-color:#EBD6A6;}
+.et-fuori{background:var(--ambra-chiaro);color:var(--ambra);border-color:#EBD6A6;}
+.et-grezzo{background:#EDF0F5;color:var(--tenue);border-color:var(--bordo);}
+.et-scorta{background:var(--rosso-chiaro);color:var(--rosso);border-color:#E4B5B0;}
+
+/* ---------- tabelle ----------------------------------------------------- */
+.scorrevole{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+table.tabella{width:100%;border-collapse:collapse;font-size:.88rem;}
+table.tabella th{
+  text-align:left;font-weight:600;color:var(--tenue);font-size:.78rem;
+  border-bottom:1px solid var(--bordo-forte);padding:.45rem .5rem;white-space:nowrap;
+}
+table.tabella td{border-bottom:1px solid var(--bordo);padding:.5rem;vertical-align:top;}
+table.tabella tr:last-child td{border-bottom:0;}
+table.tabella td.destra,table.tabella th.destra{text-align:right;}
+.carico{color:var(--verde);font-weight:600;}
+.scarico{color:var(--rosso);font-weight:600;}
+.stornato{text-decoration:line-through;color:var(--tenue);}
+
+/* ---------- messaggi ---------------------------------------------------- */
+.nota{border-radius:var(--raggio-s);padding:.7rem .85rem;font-size:.87rem;margin-bottom:1rem;}
+.nota-info{background:#EDF2FA;border:1px solid #C9D8EE;}
+.nota-ok{background:var(--verde-chiaro);border:1px solid #B6DCC8;color:#1F5B42;}
+.nota-avviso{background:var(--ambra-chiaro);border:1px solid #EBD6A6;color:var(--ambra);}
+.nota-errore{background:var(--rosso-chiaro);border:1px solid #E4B5B0;color:var(--rosso);}
+
+.vuoto{text-align:center;padding:2.2rem 1rem;color:var(--tenue);}
+.vuoto strong{display:block;color:var(--testo);margin-bottom:.3rem;font-size:1rem;}
+
+#brindisi{
+  position:fixed;left:50%;bottom:5.5rem;transform:translateX(-50%);
+  background:var(--inchiostro);color:#fff;padding:.65rem 1.1rem;
+  border-radius:99px;font-size:.9rem;box-shadow:var(--ombra);
+  z-index:90;max-width:90vw;text-align:center;
+}
+#brindisi[hidden]{display:none;}
+
+/* ---------- finestra modale --------------------------------------------- */
+.velo{
+  position:fixed;inset:0;background:rgba(22,35,63,.45);
+  display:flex;align-items:flex-end;justify-content:center;z-index:100;padding:0;
+}
+.velo[hidden]{display:none;}
+.modale{
+  background:var(--bianco);width:100%;max-width:640px;max-height:92vh;
+  border-radius:var(--raggio) var(--raggio) 0 0;display:flex;flex-direction:column;
+}
+.modale > header{
+  display:flex;align-items:center;gap:.75rem;padding:.85rem 1rem;
+  border-bottom:1px solid var(--bordo);
+}
+.modale > header h2{flex:1;font-size:1.05rem;}
+.modale .contenuto{padding:1rem;overflow-y:auto;}
+.chiudi{border:0;background:none;font-size:1.5rem;line-height:1;color:var(--tenue);padding:.1rem .4rem;}
+
+/* ---------- schermi larghi ---------------------------------------------- */
+@media (min-width:820px){
+  main{padding:1.5rem;}
+  .velo{align-items:center;padding:1.5rem;}
+  .modale{border-radius:var(--raggio);}
+  .articolo .foto{width:84px;height:84px;flex-basis:84px;}
+  h1{font-size:1.75rem;}
+}
+@media (max-width:560px){
+  .griglia-2{grid-template-columns:1fr;}
+  .stato .cifra{font-size:1.4rem;}
+  main{padding:.75rem;}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none !important;animation:none !important;}
+}
+@media print{
+  header.testata,nav.menu,.azioni,.azioni-fine,button{display:none !important;}
+  body{background:#fff;}
+  .riquadro{border:0;padding:0;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="testata">
+    <div class="marchio">Una finestra sul mondo<span>GuineAction ODV — bottega</span></div>
+    <div class="spazio"></div>
+    <span class="badge-dispositivo" id="etichettaDispositivo">dispositivo</span>
+    <span class="versione" id="etichettaVersione"></span>
+  </header>
+
+  <nav class="menu" aria-label="Sezioni">
+    <ul id="menu"></ul>
+  </nav>
+
+  <main id="vista" tabindex="-1"></main>
+</div>
+
+<div class="velo" id="velo" hidden>
+  <div class="modale" role="dialog" aria-modal="true" aria-labelledby="titoloModale">
+    <header>
+      <h2 id="titoloModale"></h2>
+      <button class="chiudi" id="chiudiModale" aria-label="Chiudi">&times;</button>
+    </header>
+    <div class="contenuto" id="contenutoModale"></div>
+  </div>
+</div>
+
+<div id="brindisi" hidden role="status"></div>
+<script>
+"use strict";
+/* ==========================================================================
+   1. MODELLO DEI DATI
+   Rispecchia lo schema SQLite v2. Ogni riga ha un "uid" globale: è quello
+   che permette a cinque dispositivi diversi di scambiarsi le righe senza
+   sovrapporsi. Gli id numerici del database qui non servono.
+   ========================================================================== */
+
+const VERSIONE = "0.9.0";
+
+function uid(){
+  const b = new Uint8Array(16);
+  if(typeof crypto !== "undefined" && crypto.getRandomValues) crypto.getRandomValues(b);
+  else for(let i=0;i<b.length;i++) b[i] = Math.floor(Math.random()*256);
+  return Array.from(b, x => x.toString(16).padStart(2,"0")).join("");
+}
+const adesso = () => new Date().toISOString().slice(0,19).replace("T"," ");
+const oggi   = () => new Date().toISOString().slice(0,10);
+
+/* Struttura vuota del database locale */
+function databaseVuoto(){
+  return {
+    versione: VERSIONE,
+    dispositivo: { uid: uid(), etichetta: "Questo dispositivo" },
+    impostazioni: {
+      tariffa_figurativa_oraria: 6.00,
+      moltiplicatore_sostegno: 1.50,
+      arrotondamento_offerta: 0.50,
+      blocca_giacenza_negativa: true
+    },
+    categorie: [], provenienze: [], persone: [], articoli: [], immagini: [],
+    movimenti: [], uscite: [], uscite_righe: [], offerte_libere: [],
+    eventi: [], evento_righe: [],
+    lavorazioni: [], lavorazione_consumi: [], lavorazione_ore: [],
+    conflitti: [], esportazioni: [], sincronizzazioni: []
+  };
+}
+
+let DB = databaseVuoto();
+
+/* Marcatura comune a ogni riga sincronizzabile */
+function nuovaRiga(dati){
+  return Object.assign({
+    uid: uid(),
+    modificato_il: adesso(),
+    modificato_da: DB.dispositivo.uid,
+    eliminato: false
+  }, dati);
+}
+function tocca(riga){
+  riga.modificato_il = adesso();
+  riga.modificato_da = DB.dispositivo.uid;
+  return riga;
+}
+const vive  = r => !r.eliminato;
+const trova = (tabella, u) => DB[tabella].find(r => r.uid === u);
+
+/* ==========================================================================
+   2. MOTORE DI MAGAZZINO
+   Regola fondamentale: la giacenza non è un numero che si sovrascrive, è la
+   somma dei movimenti. I movimenti non si modificano e non si cancellano:
+   si stornano. È questo che rende sicura la fusione fra dispositivi.
+   ========================================================================== */
+
+const TIPI_MOVIMENTO = {
+  CARICO_ACQUISTO:          { verso:+1, etichetta:"Acquisto" },
+  CARICO_DONAZIONE:         { verso:+1, etichetta:"Donazione ricevuta" },
+  CARICO_PRODUZIONE:        { verso:+1, etichetta:"Prodotto dai volontari" },
+  CARICO_RIENTRO_BANCHETTO: { verso:+1, etichetta:"Rientro da banchetto" },
+  CARICO_STORNO:            { verso:+1, etichetta:"Storno" },
+  SCARICO_TRANSAZIONE:      { verso:-1, etichetta:"Transazione" },
+  SCARICO_REGALO:           { verso:-1, etichetta:"Regalo" },
+  SCARICO_LAVORAZIONE:      { verso:-1, etichetta:"Usato in lavorazione" },
+  SCARICO_BANCHETTO:        { verso:-1, etichetta:"Uscita per banchetto" },
+  SCARICO_PERDITA:          { verso:-1, etichetta:"Perdita o rottura" },
+  SCARICO_STORNO:           { verso:-1, etichetta:"Storno" },
+  RETTIFICA_INVENTARIO:     { verso: 0, etichetta:"Rettifica da inventario" }
+};
+
+/* Un movimento stornato non conta più nel saldo */
+function movimentoAnnullato(m){
+  return DB.movimenti.some(x => x.storno_di_uid === m.uid);
+}
+function movimentiAttivi(articoloUid){
+  return DB.movimenti.filter(m =>
+    m.articolo_uid === articoloUid && !m.storno_di_uid && !movimentoAnnullato(m));
+}
+
+/* Dove incide un movimento. La bottega e il banchetto sono due luoghi
+   diversi: un articolo ceduto durante un'iniziativa scala dal banchetto,
+   non dallo scaffale. Senza questa distinzione lo stesso pezzo verrebbe
+   sottratto due volte. */
+function effetto(m){
+  if(m.storno_di_uid){                       /* uno storno annulla l'originale */
+    const orig = DB.movimenti.find(x => x.uid === m.storno_di_uid);
+    if(orig){ const e = effetto(orig); return { bottega:-e.bottega, banchetto:-e.banchetto }; }
+    return { bottega:m.quantita, banchetto:0 };
+  }
+  const q = m.quantita;
+  if(m.tipo === "SCARICO_BANCHETTO")        return { bottega:q, banchetto:-q };
+  if(m.tipo === "CARICO_RIENTRO_BANCHETTO") return { bottega:q, banchetto:-q };
+  if(m.evento_uid && (m.tipo === "SCARICO_TRANSAZIONE" || m.tipo === "SCARICO_REGALO"))
+    return { bottega:0, banchetto:q };
+  return { bottega:q, banchetto:0 };
+}
+
+/* Quanto c'è sullo scaffale */
+function giacenza(articoloUid){
+  return DB.movimenti.filter(m => m.articolo_uid === articoloUid)
+    .reduce((s,m) => s + effetto(m).bottega, 0);
+}
+/* Quanto è fuori per le iniziative; con eventoUid limita a un solo banchetto */
+function giacenzaInBanchetto(articoloUid, eventoUid){
+  return DB.movimenti.filter(m => m.articolo_uid === articoloUid
+      && (!eventoUid || m.evento_uid === eventoUid))
+    .reduce((s,m) => s + effetto(m).banchetto, 0);
+}
+/* Totale fisico: scaffale più iniziative in corso */
+function giacenzaTotale(articoloUid){
+  return giacenza(articoloUid) + giacenzaInBanchetto(articoloUid);
+}
+
+/* Registrazione di un movimento. Restituisce {ok, movimento, avviso} */
+function registraMovimento(dati){
+  const regola = TIPI_MOVIMENTO[dati.tipo];
+  if(!regola) return { ok:false, errore:"Tipo di movimento sconosciuto: " + dati.tipo };
+
+  let q = Math.abs(Number(dati.quantita) || 0);
+  if(q === 0) return { ok:false, errore:"La quantità non può essere zero." };
+  if(dati.tipo !== "RETTIFICA_INVENTARIO") q = q * regola.verso;
+  else q = Number(dati.quantita);
+
+  const art = trova("articoli", dati.articolo_uid);
+  if(!art) return { ok:false, errore:"Articolo non trovato." };
+
+  /* Il controllo va fatto sul luogo da cui esce davvero la merce */
+  const daBanchetto = dati.evento_uid &&
+    (dati.tipo === "SCARICO_TRANSAZIONE" || dati.tipo === "SCARICO_REGALO");
+  const primaDi = daBanchetto ? giacenzaInBanchetto(art.uid, dati.evento_uid) : giacenza(art.uid);
+  const dopo = primaDi + q;
+  let avviso = null;
+
+  if(dopo < 0){
+    if(DB.impostazioni.blocca_giacenza_negativa && !dati.forza){
+      return { ok:false, errore:
+        (daBanchetto ? "Al banchetto risultano " : "In bottega ci sono ") +
+        formattaQta(primaDi, art) +
+        ": non è possibile registrare questa uscita. Se il conteggio è sbagliato, " +
+        "correggilo prima con una rettifica da inventario." };
+    }
+    avviso = "La giacenza è diventata negativa: è stato aperto un conflitto da esaminare.";
+    DB.conflitti.push(nuovaRiga({
+      tabella:"articoli", riga_uid:art.uid,
+      tipo: art.tipo_gestione === "UNICO" ? "PEZZO_UNICO_DOPPIO" : "GIACENZA_NEGATIVA",
+      descrizione: art.descrizione + ": giacenza " + dopo,
+      stato:"APERTO", rilevato_il: adesso()
+    }));
+  }
+
+  const m = nuovaRiga({
+    articolo_uid: art.uid,
+    data: dati.data || adesso(),
+    tipo: dati.tipo,
+    quantita: q,
+    costo_unitario: dati.costo_unitario ?? null,
+    uscita_uid: dati.uscita_uid || null,
+    evento_uid: dati.evento_uid || null,
+    lavorazione_uid: dati.lavorazione_uid || null,
+    operatore_uid: dati.operatore_uid || null,
+    storno_di_uid: dati.storno_di_uid || null,
+    causale: dati.causale || null,
+    note: dati.note || null,
+    dispositivo_uid: DB.dispositivo.uid
+  });
+  DB.movimenti.push(m);
+
+  /* Un pezzo unico ceduto esce dall'elenco; se rientra, ricompare */
+  if(art.tipo_gestione === "UNICO"){
+    art.archiviato = (giacenza(art.uid) + giacenzaInBanchetto(art.uid)) <= 0;
+    tocca(art);
+  }
+  return { ok:true, movimento:m, avviso };
+}
+
+function stornaMovimento(movUid, motivo){
+  const m = trova("movimenti", movUid);
+  if(!m) return { ok:false, errore:"Movimento non trovato." };
+  if(movimentoAnnullato(m)) return { ok:false, errore:"Questo movimento risulta già stornato." };
+  const tipoStorno = m.quantita < 0 ? "CARICO_STORNO" : "SCARICO_STORNO";
+  return registraMovimento({
+    articolo_uid: m.articolo_uid, tipo: tipoStorno, quantita: Math.abs(m.quantita),
+    storno_di_uid: m.uid, causale: motivo || "Storno di una registrazione errata", forza:true
+  });
+}
+
+/* ==========================================================================
+   3. OFFERTA SUGGERITA
+   Costi vivi + valorizzazione del lavoro volontario, moltiplicata per il
+   coefficiente di sostegno e arrotondata. La valorizzazione resta un dato
+   a sé: serve a proporre un importo e a rendicontare le ore donate, non è
+   un costo che finisce in contabilità.
+   ========================================================================== */
+function calcolaOffertaSuggerita(costoMateriali, ore){
+  const i = DB.impostazioni;
+  const grezzo = (Number(costoMateriali)||0) + (Number(ore)||0) * i.tariffa_figurativa_oraria;
+  const conMargine = grezzo * i.moltiplicatore_sostegno;
+  const passo = i.arrotondamento_offerta || 0.5;
+  return Math.round(conMargine / passo) * passo;
+}
+
+/* ==========================================================================
+   4. FORMATTAZIONE
+   ========================================================================== */
+const euro = n => (Number(n)||0).toLocaleString("it-IT",{style:"currency",currency:"EUR"});
+const numero = n => (Number(n)||0).toLocaleString("it-IT",{maximumFractionDigits:2});
+function formattaQta(q, art){
+  const u = art ? art.unita_misura : "pz";
+  return numero(q) + " " + u;
+}
+function dataBreve(s){
+  if(!s) return "";
+  const d = new Date(s.replace(" ","T"));
+  return isNaN(d) ? s : d.toLocaleDateString("it-IT",{day:"2-digit",month:"2-digit",year:"numeric"});
+}
+function esc(s){
+  return String(s ?? "").replace(/[&<>"']/g, c =>
+    ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+const nomeCategoria  = u => (trova("categorie",u)  || {}).nome || "—";
+function nomeProvenienza(u){
+  const p = trova("provenienze", u);
+  if(!p) return "—";
+  return p.localita + (p.regione ? " (" + p.regione + ")" : "");
+}
+const nomePersona = u => (trova("persone",u) || {}).nominativo || "—";
+function fotoPrincipale(articoloUid){
+  const f = DB.immagini.filter(i => i.articolo_uid === articoloUid && vive(i));
+  return (f.find(i => i.principale) || f[0] || {}).miniatura || null;
+}
+/* ==========================================================================
+   5. NAVIGAZIONE
+   ========================================================================== */
+const SEZIONI = [
+  { id:"bottega",     voce:"Bottega" },
+  { id:"uscita",      voce:"Registra un'uscita" },
+  { id:"banchetti",   voce:"Banchetti" },
+  { id:"lavorazioni", voce:"Lavorazioni" },
+  { id:"registro",    voce:"Registro" },
+  { id:"rendiconti",  voce:"Rendiconti" },
+  { id:"anagrafiche", voce:"Anagrafiche" },
+  { id:"dati",        voce:"Dati e sincronizzazione" }
+];
+let sezioneCorrente = "bottega";
+let statoVista = {};
+
+function vaiA(id, stato){
+  sezioneCorrente = id;
+  statoVista = stato || {};
+  disegna();
+  document.getElementById("vista").focus();
+  window.scrollTo(0,0);
+}
+
+function disegnaMenu(){
+  const aperti = DB.conflitti.filter(c => c.stato === "APERTO").length;
+  document.getElementById("menu").innerHTML = SEZIONI.map(s => {
+    const pallino = (s.id === "dati" && aperti) ? '<span class="pallino">'+aperti+'</span>' : "";
+    const attivo = s.id === sezioneCorrente ? ' aria-current="page"' : "";
+    return '<li><button data-vai="'+s.id+'"'+attivo+'>'+s.voce+pallino+'</button></li>';
+  }).join("");
+}
+
+function disegna(){
+  disegnaMenu();
+  document.getElementById("etichettaDispositivo").textContent = DB.dispositivo.etichetta;
+  document.getElementById("etichettaVersione").textContent = "v" + VERSIONE;
+  const v = document.getElementById("vista");
+  const disegnatori = {
+    bottega: vistaBottega, uscita: vistaUscita, banchetti: vistaBanchetti,
+    lavorazioni: vistaLavorazioni, registro: vistaRegistro, rendiconti: vistaRendiconti,
+    anagrafiche: vistaAnagrafiche, dati: vistaDati
+  };
+  v.innerHTML = (disegnatori[sezioneCorrente] || vistaBottega)();
+}
+
+function avvisa(testo){
+  const b = document.getElementById("brindisi");
+  b.textContent = testo; b.hidden = false;
+  clearTimeout(avvisa._t);
+  avvisa._t = setTimeout(()=>{ b.hidden = true; }, 3200);
+}
+
+/* Finestra modale */
+function apriModale(titolo, html){
+  document.getElementById("titoloModale").textContent = titolo;
+  document.getElementById("contenutoModale").innerHTML = html;
+  document.getElementById("velo").hidden = false;
+  const primo = document.querySelector("#contenutoModale input, #contenutoModale select, #contenutoModale button");
+  if(primo) primo.focus();
+}
+function chiudiModale(){
+  document.getElementById("velo").hidden = true;
+  document.getElementById("contenutoModale").innerHTML = "";
+}
+
+/* ==========================================================================
+   6. BOTTEGA — elenco degli articoli
+   ========================================================================== */
+let filtri = { testo:"", categoria:"", tipo:"", mostraArchiviati:false };
+
+function articoliFiltrati(){
+  const t = filtri.testo.trim().toLowerCase();
+  /* Se quello che si sta cercando ha la forma di un codice ed esiste almeno un
+     articolo che comincia così, si filtra sul codice e basta: cercare "BOR"
+     deve dare le borse, non gli articoli che nominano BOR in una nota. */
+  const paresembraCodice = /^[a-z]{2,3}(-[0-9a-z]*)*$/.test(t);
+  const perCodice = paresembraCodice && DB.articoli.some(a =>
+    a.codice && a.codice.toLowerCase().startsWith(t));
+
+  return DB.articoli.filter(a => {
+    if(!vive(a) || !a.attivo) return false;
+    if(!filtri.mostraArchiviati && a.archiviato) return false;
+    if(filtri.categoria && a.categoria_uid !== filtri.categoria) return false;
+    if(filtri.tipo && a.tipo_articolo !== filtri.tipo) return false;
+    if(t){
+      if(perCodice) return a.codice && a.codice.toLowerCase().startsWith(t);
+      const campi = [a.descrizione, a.codice, nomeCategoria(a.categoria_uid),
+                     nomeProvenienza(a.provenienza_uid), a.note].join(" ").toLowerCase();
+      if(!campi.includes(t)) return false;
+    }
+    return true;
+  }).sort((a,b) => (a.codice||"zzz").localeCompare(b.codice||"zzz","it")
+                || a.descrizione.localeCompare(b.descrizione,"it"));
+}
+
+function rigaArticolo(a){
+  const g = giacenza(a.uid), fuori = giacenzaInBanchetto(a.uid);
+  const foto = fotoPrincipale(a.uid);
+  const etichette = [];
+  if(a.tipo_gestione === "UNICO") etichette.push('<span class="etichetta et-unico">pezzo unico</span>');
+  if(a.tipo_articolo === "GREZZO") etichette.push('<span class="etichetta et-grezzo">da lavorare</span>');
+  if(a.tipo_articolo === "MATERIALE") etichette.push('<span class="etichetta et-grezzo">materiale</span>');
+  if(fuori > 0) etichette.push('<span class="etichetta et-fuori">'+numero(fuori)+' al banchetto</span>');
+  if(a.tipo_gestione === "SERIE" && g <= (a.giacenza_minima||0) && g > 0)
+    etichette.push('<span class="etichetta et-scorta">sotto scorta</span>');
+
+  return '<button class="articolo '+(a.tipo_gestione==="UNICO"?"unico":"")+' '+(g<=0?"esaurito":"")+'" data-articolo="'+a.uid+'">'
+    + '<span class="foto"'+(foto?' style="background-image:url('+foto+')"':'')+'>'+(foto?"":"▢")+'</span>'
+    + '<span class="corpo">'
+      + '<span class="titolo">'+esc(a.descrizione)+'</span>'
+      + '<span class="dettagli">'+(a.codice ? '<span class="codice">'+esc(a.codice)+'</span> ' : '')
+        + esc(nomeCategoria(a.categoria_uid))
+        + (a.provenienza_uid ? ' · ' + esc(nomeProvenienza(a.provenienza_uid)) : '') + '</span>'
+      + (etichette.length ? '<span class="dettagli">'+etichette.join(" ")+'</span>' : '')
+    + '</span>'
+    + '<span class="destra">'
+      + '<span class="offerta">'+(a.offerta_suggerita ? euro(a.offerta_suggerita) : "—")+'</span>'
+      + '<span class="giacenza">'+formattaQta(g, a)+'</span>'
+    + '</span></button>';
+}
+
+function vistaBottega(){
+  const elenco = articoliFiltrati();
+  const inBottega = DB.articoli.filter(a=>vive(a)&&a.attivo).reduce((s,a)=>s+Math.max(0,giacenza(a.uid)),0);
+  const fuori = DB.articoli.reduce((s,a)=>s+giacenzaInBanchetto(a.uid),0);
+  const meseCorrente = new Date().toISOString().slice(0,7);
+  const offerteMese = DB.uscite.filter(u=>vive(u)&&u.data.startsWith(meseCorrente))
+      .reduce((s,u)=>s+(u.offerta_ricevuta||0),0)
+    + DB.offerte_libere.filter(o=>vive(o)&&o.data.startsWith(meseCorrente))
+      .reduce((s,o)=>s+o.importo,0);
+  const conflitti = DB.conflitti.filter(c=>c.stato==="APERTO").length;
+
+  const opzioniCat = DB.categorie.filter(vive)
+    .map(c=>'<option value="'+c.uid+'"'+(filtri.categoria===c.uid?" selected":"")+'>'+esc(c.nome)+'</option>').join("");
+
+  return `
+  <div class="stato">
+    <div><div class="cifra">${numero(inBottega)}</div><div class="voce">pezzi in bottega</div></div>
+    <div><div class="cifra">${numero(fuori)}</div><div class="voce">fuori per banchetti</div></div>
+    <div><div class="cifra">${euro(offerteMese)}</div><div class="voce">offerte del mese</div></div>
+    <div class="${conflitti?'avviso':''}"><div class="cifra">${conflitti}</div><div class="voce">conflitti da esaminare</div></div>
+  </div>
+
+  <div class="intestazione-vista">
+    <div class="testo">
+      <h1>Bottega</h1>
+      <p>${elenco.length} ${elenco.length===1?"articolo":"articoli"} in elenco.</p>
+    </div>
+    <div class="azioni">
+      <button class="primario" data-vai="uscita">Registra un'uscita</button>
+      <button data-nuovo-articolo>Aggiungi un articolo</button>
+    </div>
+  </div>
+
+  <div class="riquadro">
+    <div class="barra-filtri">
+      <div class="campo"><label for="fTesto">Cerca</label>
+        <input id="fTesto" type="search" placeholder="sigla del codice, descrizione, provenienza…" value="${esc(filtri.testo)}"></div>
+      <div class="campo"><label for="fCat">Categoria</label>
+        <select id="fCat"><option value="">tutte</option>${opzioniCat}</select></div>
+      <div class="campo"><label for="fTipo">Tipo</label>
+        <select id="fTipo">
+          <option value="">tutti</option>
+          <option value="FINITO"${filtri.tipo==="FINITO"?" selected":""}>pronti per la bottega</option>
+          <option value="GREZZO"${filtri.tipo==="GREZZO"?" selected":""}>da lavorare</option>
+          <option value="MATERIALE"${filtri.tipo==="MATERIALE"?" selected":""}>materiali di consumo</option>
+        </select></div>
+      <div class="campo" style="flex:0 0 auto">
+        <label for="fArch">&nbsp;</label>
+        <button id="fArch">${filtri.mostraArchiviati?"Nascondi i pezzi usciti":"Mostra anche i pezzi usciti"}</button>
+      </div>
+    </div>
+    ${elenco.length ? '<div class="elenco">'+elenco.map(rigaArticolo).join("")+'</div>'
+      : '<div class="vuoto"><strong>Nessun articolo corrisponde alla ricerca.</strong>Cambia i filtri, oppure aggiungi un articolo nuovo.</div>'}
+  </div>`;
+}
+
+/* ---------- scheda di un articolo ---------------------------------------- */
+function apriArticolo(u){
+  const a = trova("articoli", u);
+  if(!a) return;
+  const g = giacenza(a.uid), fuori = giacenzaInBanchetto(a.uid);
+  const foto = DB.immagini.filter(i=>i.articolo_uid===a.uid && vive(i));
+  const movs = DB.movimenti.filter(m=>m.articolo_uid===a.uid)
+    .sort((x,y)=>y.data.localeCompare(x.data)).slice(0,12);
+
+  apriModale(a.descrizione, `
+    ${foto.length ? '<div style="display:flex;gap:.5rem;overflow-x:auto;margin-bottom:1rem">'
+      + foto.map(f=>'<img src="'+f.miniatura+'" alt="'+esc(f.didascalia||a.descrizione)+'" style="height:120px;border-radius:6px">').join("")
+      + '</div>' : ''}
+    <div class="griglia" style="margin-bottom:1rem">
+      <div><label>In bottega</label><strong class="num">${formattaQta(g,a)}</strong></div>
+      <div><label>Fuori per banchetti</label><strong class="num">${formattaQta(fuori,a)}</strong></div>
+      <div><label>Offerta suggerita</label><strong class="num">${a.offerta_suggerita?euro(a.offerta_suggerita):"—"}</strong></div>
+      <div><label>Costo di approvvigionamento</label><strong class="num">${euro(a.costo_unitario_acquisto)}</strong></div>
+    </div>
+    <div class="griglia" style="margin-bottom:1rem">
+      <div><label>Categoria</label>${esc(nomeCategoria(a.categoria_uid))}</div>
+      <div><label>Provenienza</label>${esc(nomeProvenienza(a.provenienza_uid))}</div>
+      <div><label>Gestione</label>${a.tipo_gestione==="UNICO"?"pezzo unico":"articolo in serie"}</div>
+      <div><label>Codice</label>${esc(a.codice||"—")}</div>
+    </div>
+    ${a.valorizzazione_lavoro ? '<div class="nota nota-info">Di questa offerta, '
+      + euro(a.valorizzazione_lavoro) + ' rappresenta il lavoro donato dai volontari. '
+      + 'È una stima per la relazione di missione, non un costo contabile.</div>' : ''}
+    ${a.note ? '<div class="campo"><label>Note</label>'+esc(a.note)+'</div>' : ''}
+
+    <h3 style="margin:1.2rem 0 .5rem">Ultimi movimenti</h3>
+    <div class="scorrevole"><table class="tabella">
+      <thead><tr><th>Data</th><th>Causale</th><th class="destra">Quantità</th><th></th></tr></thead>
+      <tbody>${movs.length ? movs.map(m=>{
+        const ann = movimentoAnnullato(m);
+        return '<tr class="'+(ann?"stornato":"")+'"><td>'+dataBreve(m.data)+'</td>'
+          + '<td>'+esc(TIPI_MOVIMENTO[m.tipo].etichetta)+(m.causale?' — '+esc(m.causale):'')+'</td>'
+          + '<td class="destra '+(m.quantita>0?"carico":"scarico")+'">'+(m.quantita>0?"+":"")+numero(m.quantita)+'</td>'
+          + '<td class="destra">'+(ann||m.storno_di_uid?'':'<button class="piccolo" data-storna="'+m.uid+'">storna</button>')+'</td></tr>';
+      }).join("") : '<tr><td colspan="4">Nessun movimento registrato.</td></tr>'}</tbody>
+    </table></div>
+
+    <div class="azioni-fine">
+      <button data-carica="${a.uid}">Carica in magazzino</button>
+      <button data-modifica-articolo="${a.uid}">Modifica</button>
+      <button class="primario" data-uscita-rapida="${a.uid}">Registra un'uscita</button>
+    </div>`);
+}
+
+/* ---------- inserimento e modifica di un articolo ------------------------ */
+function formArticolo(u){
+  const a = u ? trova("articoli", u) : null;
+  const cat = DB.categorie.filter(vive).map(c =>
+    '<option value="'+c.uid+'"'+(a&&a.categoria_uid===c.uid?" selected":"")+'>'+esc(c.nome)+'</option>').join("");
+  const prov = DB.provenienze.filter(vive).map(p =>
+    '<option value="'+p.uid+'"'+(a&&a.provenienza_uid===p.uid?" selected":"")+'>'+esc(nomeProvenienza(p.uid))+'</option>').join("");
+
+  apriModale(a ? "Modifica articolo" : "Nuovo articolo", `
+    <form id="formArticolo">
+      <input type="hidden" name="uid" value="${a?a.uid:""}">
+      <div class="campo"><label for="aDesc">Descrizione</label>
+        <input id="aDesc" name="descrizione" required value="${esc(a?a.descrizione:"")}"
+               placeholder="es. Maschera in legno intagliato"></div>
+
+      <div class="griglia-2">
+        <div class="campo"><label for="aCat">Categoria</label>
+          <select id="aCat" name="categoria_uid"><option value="">—</option>${cat}</select></div>
+        <div class="campo"><label for="aProv">Provenienza</label>
+          <select id="aProv" name="provenienza_uid"><option value="">—</option>${prov}</select></div>
+      </div>
+
+      <fieldset>
+        <legend>Come si conta questo articolo</legend>
+        <div class="scelte">
+          <button type="button" class="scelta" data-gestione="UNICO" aria-pressed="${a&&a.tipo_gestione==="UNICO"}">
+            <strong>Pezzo unico</strong><small>Un solo esemplare, irripetibile. Quando esce, sparisce dall'elenco.</small></button>
+          <button type="button" class="scelta" data-gestione="SERIE" aria-pressed="${!a||a.tipo_gestione!=="UNICO"}">
+            <strong>Articolo in serie</strong><small>Più esemplari uguali, si conta la quantità.</small></button>
+        </div>
+        <input type="hidden" name="tipo_gestione" value="${a?a.tipo_gestione:"SERIE"}">
+      </fieldset>
+
+      <div class="griglia-2">
+        <div class="campo"><label for="aTipo">A che punto è</label>
+          <select id="aTipo" name="tipo_articolo">
+            <option value="FINITO"${!a||a.tipo_articolo==="FINITO"?" selected":""}>pronto per la bottega</option>
+            <option value="GREZZO"${a&&a.tipo_articolo==="GREZZO"?" selected":""}>grezzo, da lavorare</option>
+            <option value="MATERIALE"${a&&a.tipo_articolo==="MATERIALE"?" selected":""}>materiale di consumo</option>
+          </select></div>
+        <div class="campo"><label for="aUm">Unità di misura</label>
+          <input id="aUm" name="unita_misura" value="${esc(a?a.unita_misura:"pz")}" placeholder="pz, m, kg"></div>
+      </div>
+
+      <fieldset>
+        <legend>Importi</legend>
+        <div class="griglia">
+          <div class="campo"><label for="aCosto">Costo di approvvigionamento</label>
+            <input id="aCosto" name="costo_unitario_acquisto" type="number" step="0.01" min="0"
+                   value="${a?a.costo_unitario_acquisto:0}"></div>
+          <div class="campo"><label for="aOre">Ore di lavoro volontario</label>
+            <input id="aOre" name="ore_lavoro" type="number" step="0.25" min="0" value="${a?(a.ore_lavoro||0):0}"></div>
+          <div class="campo"><label for="aOfferta">Offerta suggerita</label>
+            <input id="aOfferta" name="offerta_suggerita" type="number" step="0.5" min="0"
+                   value="${a&&a.offerta_suggerita?a.offerta_suggerita:""}"></div>
+        </div>
+        <button type="button" class="piccolo" id="calcolaOfferta">Calcola l'offerta suggerita</button>
+        <div class="aiuto">Costo dei materiali più le ore donate valorizzate a
+          ${euro(DB.impostazioni.tariffa_figurativa_oraria)}/ora, moltiplicato per
+          ${numero(DB.impostazioni.moltiplicatore_sostegno)}. Puoi sempre correggere l'importo a mano.</div>
+      </fieldset>
+
+      <div class="griglia-2">
+        <div class="campo"><label for="aCodice">Codice o etichetta</label>
+          <input id="aCodice" name="codice" value="${esc(a?(a.codice||""):"")}"></div>
+        <div class="campo"><label for="aMin">Avvisami sotto questa quantità</label>
+          <input id="aMin" name="giacenza_minima" type="number" step="1" min="0" value="${a?(a.giacenza_minima||0):0}"></div>
+      </div>
+
+      <div class="campo"><label for="aFoto">Fotografia</label>
+        <input id="aFoto" type="file" accept="image/*" capture="environment" multiple>
+        <div class="aiuto">Le immagini vengono ridotte prima di essere salvate.</div>
+        <div id="anteprime" style="display:flex;gap:.4rem;margin-top:.5rem;flex-wrap:wrap"></div></div>
+
+      <div class="campo"><label for="aNote">Note</label>
+        <textarea id="aNote" name="note">${esc(a?(a.note||""):"")}</textarea></div>
+
+      ${!a ? `<fieldset><legend>Quantità iniziale</legend>
+        <div class="griglia-2">
+          <div class="campo"><label for="aQta">Quante ne entrano ora</label>
+            <input id="aQta" name="quantita_iniziale" type="number" step="1" min="0" value="1"></div>
+          <div class="campo"><label for="aOrigine">Come sono arrivate</label>
+            <select id="aOrigine" name="origine">
+              <option value="CARICO_ACQUISTO">acquistate</option>
+              <option value="CARICO_DONAZIONE">donate</option>
+            </select></div>
+        </div></fieldset>` : ""}
+
+      <div class="azioni-fine">
+        <button type="button" data-chiudi>Annulla</button>
+        <button type="submit" class="primario">${a?"Salva le modifiche":"Aggiungi l'articolo"}</button>
+      </div>
+    </form>`);
+}
+
+/* Riduzione delle immagini: sul telefono una foto pesa troppo per essere
+   spedita così com'è nel pacchetto di sincronizzazione. */
+let fotoInAttesa = [];
+function riduciImmagine(file, lato){
+  return new Promise(res => {
+    const lettore = new FileReader();
+    lettore.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const scala = Math.min(1, lato / Math.max(img.width, img.height));
+        const c = document.createElement("canvas");
+        c.width = Math.round(img.width*scala); c.height = Math.round(img.height*scala);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        res(c.toDataURL("image/jpeg", .72));
+      };
+      img.src = lettore.result;
+    };
+    lettore.readAsDataURL(file);
+  });
+}
+/* ==========================================================================
+   7. REGISTRARE UN'USCITA
+   Regalo, transazione, banchetto. È l'operazione più frequente in bottega:
+   deve stare in una schermata sola.
+   ========================================================================== */
+let carrello = { modalita:"TRANSAZIONE", righe:[], persona_uid:"", evento_uid:"",
+                 offerta_ricevuta:"", incasso:"CONTANTI", note:"" };
+
+/* Sostituire l'archivio (esempio, ripristino, azzeramento) mentre un'uscita è
+   in preparazione lascerebbe nel carrello articoli che non esistono più. */
+function svuotaCarrello(){
+  carrello = { modalita:"TRANSAZIONE", righe:[], persona_uid:"", evento_uid:"",
+               offerta_ricevuta:"", incasso:"CONTANTI", note:"" };
+}
+
+function totaleSuggerito(){
+  return carrello.righe.reduce((s,r)=>s + r.quantita * r.offerta_unitaria, 0);
+}
+
+function vistaUscita(){
+  /* Con la modalità banchetto si cede quello che è stato portato all'iniziativa,
+     non quello rimasto sullo scaffale. */
+  const alBanchetto = carrello.modalita === "BANCHETTO" && carrello.evento_uid;
+  const disponibile = a => alBanchetto
+    ? giacenzaInBanchetto(a.uid, carrello.evento_uid)
+    : giacenza(a.uid);
+  const disponibili = DB.articoli.filter(a =>
+    vive(a) && a.attivo && a.tipo_articolo === "FINITO" && disponibile(a) > 0);
+  const eventiAperti = DB.eventi.filter(e => vive(e) && e.stato !== "CHIUSO");
+  const sostenitori = DB.persone.filter(p => vive(p) && p.attivo);
+
+  const righe = carrello.righe.map((r,i)=>{
+    const a = trova("articoli", r.articolo_uid);
+    return '<tr><td>'+esc(a?a.descrizione:"?")+'</td>'
+      + '<td class="destra"><input type="number" min="0.01" step="1" style="width:5.5rem" '
+      + 'data-riga-qta="'+i+'" value="'+r.quantita+'"></td>'
+      + '<td class="destra"><input type="number" min="0" step="0.5" style="width:6.5rem" '
+      + 'data-riga-off="'+i+'" value="'+r.offerta_unitaria+'"'+(carrello.modalita==="REGALO"?" disabled":"")+'></td>'
+      + '<td class="destra num">'+euro(r.quantita*r.offerta_unitaria)+'</td>'
+      + '<td class="destra"><button class="piccolo" data-togli-riga="'+i+'">togli</button></td></tr>';
+  }).join("");
+
+  return `
+  <div class="intestazione-vista">
+    <div class="testo"><h1>Registra un'uscita</h1>
+      <p>Ogni articolo che lascia la bottega passa da qui.</p></div>
+    <div class="azioni"><button data-vai="bottega">Torna alla bottega</button></div>
+  </div>
+
+  <div class="riquadro">
+    <h2>Con quale modalità</h2>
+    <div class="sottotitolo">La modalità decide se e come registrare l'offerta.</div>
+    <div class="scelte">
+      <button type="button" class="scelta" data-modalita="TRANSAZIONE" aria-pressed="${carrello.modalita==="TRANSAZIONE"}">
+        <strong>Transazione</strong><small>C'è un'offerta suggerita. Il sostenitore può dare di più o di meno.</small></button>
+      <button type="button" class="scelta" data-modalita="REGALO" aria-pressed="${carrello.modalita==="REGALO"}">
+        <strong>Regalo</strong><small>Nessuna offerta. L'articolo esce comunque dal magazzino.</small></button>
+      <button type="button" class="scelta" data-modalita="BANCHETTO" aria-pressed="${carrello.modalita==="BANCHETTO"}">
+        <strong>Ceduto a un banchetto</strong><small>Uscita avvenuta durante un'iniziativa esterna.</small></button>
+    </div>
+  </div>
+
+  <div class="riquadro">
+    <h2>Articoli</h2>
+    <div class="sottotitolo">${alBanchetto ? "Compaiono gli articoli portati a questo banchetto."
+      : "Compaiono solo gli articoli pronti e disponibili in bottega."}</div>
+    <div class="campo">
+      <label for="uSel">Aggiungi un articolo</label>
+      <select id="uSel">
+        <option value="">— scegli —</option>
+        ${disponibili.map(a=>'<option value="'+a.uid+'">'+esc(a.descrizione)
+          +' ('+formattaQta(disponibile(a),a)+(a.offerta_suggerita?' — '+euro(a.offerta_suggerita):'')+')</option>').join("")}
+      </select>
+    </div>
+    ${carrello.righe.length ? `<div class="scorrevole"><table class="tabella">
+        <thead><tr><th>Articolo</th><th class="destra">Quantità</th>
+          <th class="destra">Offerta unitaria</th><th class="destra">Totale</th><th></th></tr></thead>
+        <tbody>${righe}</tbody>
+        <tfoot><tr><th colspan="3" class="destra">Offerta suggerita</th>
+          <th class="destra num">${euro(totaleSuggerito())}</th><th></th></tr></tfoot>
+      </table></div>`
+      : '<div class="vuoto"><strong>Nessun articolo selezionato.</strong>Aggiungine almeno uno per registrare l\'uscita.</div>'}
+  </div>
+
+  <div class="riquadro">
+    <h2>Chi la riceve</h2>
+    <div class="griglia">
+      <div class="campo"><label for="uPersona">Sostenitore</label>
+        <select id="uPersona"><option value="">non indicato</option>
+          ${sostenitori.map(p=>'<option value="'+p.uid+'"'+(carrello.persona_uid===p.uid?" selected":"")+'>'
+            +esc(p.nominativo)+(p.codice_gestionale?' ('+esc(p.codice_gestionale)+')':'')+'</option>').join("")}
+        </select>
+        <div class="aiuto">Indicalo se serve una ricevuta per l'erogazione liberale.</div></div>
+      ${carrello.modalita==="BANCHETTO" ? `<div class="campo"><label for="uEvento">Banchetto</label>
+        <select id="uEvento"><option value="">— scegli —</option>
+          ${eventiAperti.map(e=>'<option value="'+e.uid+'"'+(carrello.evento_uid===e.uid?" selected":"")+'>'
+            +esc(e.titolo)+'</option>').join("")}</select></div>` : ""}
+    </div>
+  </div>
+
+  ${carrello.modalita!=="REGALO" ? `<div class="riquadro">
+    <h2>Offerta ricevuta</h2>
+    <div class="sottotitolo">Scrivi quanto è stato effettivamente dato, anche se diverso dal suggerito.</div>
+    <div class="griglia">
+      <div class="campo"><label for="uRicevuta">Importo ricevuto</label>
+        <input id="uRicevuta" type="number" step="0.5" min="0" value="${carrello.offerta_ricevuta}"
+               placeholder="${totaleSuggerito().toFixed(2)}"></div>
+      <div class="campo"><label for="uIncasso">Come</label>
+        <select id="uIncasso">
+          ${["CONTANTI","BONIFICO","SATISPAY","ALTRO"].map(m=>'<option value="'+m+'"'
+            +(carrello.incasso===m?" selected":"")+'>'+m.toLowerCase()+'</option>').join("")}
+        </select></div>
+    </div>
+  </div>` : `<div class="nota nota-info">Uscita in regalo: non verrà registrata nessuna offerta,
+     ma il costo di quanto è stato donato resta visibile nei rendiconti.</div>`}
+
+  <div class="riquadro">
+    <div class="campo"><label for="uNote">Note</label>
+      <textarea id="uNote" placeholder="es. consegnato alla scuola di Kindia">${esc(carrello.note)}</textarea></div>
+    <div class="azioni-fine">
+      <button data-svuota-carrello>Annulla tutto</button>
+      <button class="primario grande" data-conferma-uscita ${carrello.righe.length?"":"disabled"}>Registra l'uscita</button>
+    </div>
+  </div>`;
+}
+
+function confermaUscita(){
+  if(!carrello.righe.length) return;
+  if(carrello.modalita === "BANCHETTO" && !carrello.evento_uid){
+    return avvisa("Scegli a quale banchetto si riferisce l'uscita.");
+  }
+  const suggerito = totaleSuggerito();
+  const ricevuta = carrello.modalita === "REGALO" ? 0
+    : (carrello.offerta_ricevuta === "" ? suggerito : Number(carrello.offerta_ricevuta));
+
+  /* Prima si controlla tutto, poi si registra. Se una riga non passa a metà
+     strada, le righe già scritte resterebbero senza la loro uscita: meglio
+     accorgersene prima di toccare il registro. */
+  carrello.righe = carrello.righe.filter(r => trova("articoli", r.articolo_uid));
+  if(!carrello.righe.length) return avvisa("Nessun articolo valido da registrare.");
+  if(DB.impostazioni.blocca_giacenza_negativa){
+    for(const r of carrello.righe){
+      const a = trova("articoli", r.articolo_uid);
+      const disp = carrello.evento_uid
+        ? giacenzaInBanchetto(r.articolo_uid, carrello.evento_uid)
+        : giacenza(r.articolo_uid);
+      if(r.quantita > disp){
+        return avvisa((a ? a.descrizione + ": " : "") +
+          (carrello.evento_uid ? "al banchetto ci sono " : "in bottega ci sono ") +
+          formattaQta(disp, a) + ", non " + formattaQta(r.quantita, a) + ".");
+      }
+    }
+  }
+
+  const u = nuovaRiga({
+    data: adesso(),
+    modalita: carrello.modalita,
+    persona_uid: carrello.persona_uid || null,
+    evento_uid: carrello.evento_uid || null,
+    offerta_suggerita: suggerito,
+    offerta_ricevuta: ricevuta,
+    modalita_incasso: carrello.modalita === "REGALO" ? null : carrello.incasso,
+    esportazione_uid: null,
+    note: carrello.note || null
+  });
+
+  /* L'offerta ricevuta si ripartisce sulle righe in proporzione al suggerito,
+     così ogni articolo porta con sé quanto ha effettivamente raccolto. */
+  const movimenti = [];
+  for(const r of carrello.righe){
+    const quota = suggerito > 0 ? (r.quantita*r.offerta_unitaria)/suggerito : 1/carrello.righe.length;
+    const esito = registraMovimento({
+      articolo_uid: r.articolo_uid,
+      tipo: carrello.modalita === "REGALO" ? "SCARICO_REGALO" : "SCARICO_TRANSAZIONE",
+      quantita: r.quantita, uscita_uid: u.uid, evento_uid: carrello.evento_uid || null
+    });
+    if(!esito.ok){ return avvisa(esito.errore); }
+    movimenti.push(esito.movimento);
+    DB.uscite_righe.push(nuovaRiga({
+      uscita_uid: u.uid, articolo_uid: r.articolo_uid, quantita: r.quantita,
+      offerta_suggerita_unitaria: r.offerta_unitaria,
+      offerta_ricevuta_riga: Math.round(ricevuta*quota*100)/100
+    }));
+    if(carrello.evento_uid){
+      const er = DB.evento_righe.find(x => x.evento_uid===carrello.evento_uid && x.articolo_uid===r.articolo_uid);
+      if(er){ er.quantita_ceduta = (er.quantita_ceduta||0) + r.quantita; tocca(er); }
+    }
+  }
+  DB.uscite.push(u);
+  carrello = { modalita:carrello.modalita, righe:[], persona_uid:"", evento_uid:carrello.evento_uid,
+               offerta_ricevuta:"", incasso:"CONTANTI", note:"" };
+  salvaLocale();
+  avvisa(carrello.modalita === "REGALO" ? "Regalo registrato." : "Uscita registrata: " + euro(ricevuta));
+  vaiA("bottega");
+}
+
+/* ==========================================================================
+   8. BANCHETTI
+   Ciclo in tre tempi: assegnazione, cessioni durante l'iniziativa, rientro.
+   ========================================================================== */
+function vistaBanchetti(){
+  const eventi = DB.eventi.filter(vive).sort((a,b)=>b.data_inizio.localeCompare(a.data_inizio));
+  return `
+  <div class="intestazione-vista">
+    <div class="testo"><h1>Banchetti</h1>
+      <p>Gli articoli portati a un'iniziativa restano dell'associazione finché non vengono ceduti.</p></div>
+    <div class="azioni"><button class="primario" data-nuovo-evento>Nuovo banchetto</button></div>
+  </div>
+  ${eventi.length ? eventi.map(e=>{
+    const righe = DB.evento_righe.filter(r=>r.evento_uid===e.uid && vive(r));
+    const usciti = righe.reduce((s,r)=>s+r.quantita_assegnata,0);
+    const ceduti = righe.reduce((s,r)=>s+(r.quantita_ceduta||0),0);
+    const rientrati = righe.reduce((s,r)=>s+(r.quantita_rientrata||0),0);
+    const fuori = usciti - ceduti - rientrati;
+    const offerte = DB.uscite.filter(u=>vive(u)&&u.evento_uid===e.uid).reduce((s,u)=>s+u.offerta_ricevuta,0)
+      + DB.offerte_libere.filter(o=>vive(o)&&o.evento_uid===e.uid).reduce((s,o)=>s+o.importo,0);
+    return `<div class="riquadro">
+      <div class="intestazione-vista" style="margin-bottom:.6rem">
+        <div class="testo"><h2>${esc(e.titolo)}</h2>
+          <p>${esc(e.luogo||"")} · ${dataBreve(e.data_inizio)} · ${e.stato.toLowerCase()}</p></div>
+        <div class="azioni">
+          ${e.stato!=="CHIUSO" ? '<button data-assegna="'+e.uid+'">Prepara gli articoli</button>'
+            + '<button data-chiudi-evento="'+e.uid+'">Registra i rientri</button>' : ''}
+        </div>
+      </div>
+      <div class="scorrevole"><table class="tabella">
+        <thead><tr><th>Articolo</th><th class="destra">Portati</th><th class="destra">Ceduti</th>
+          <th class="destra">Rientrati</th><th class="destra">Ancora fuori</th></tr></thead>
+        <tbody>${righe.length ? righe.map(r=>{
+          const a = trova("articoli", r.articolo_uid);
+          const f = r.quantita_assegnata-(r.quantita_ceduta||0)-(r.quantita_rientrata||0);
+          return '<tr><td>'+esc(a?a.descrizione:"?")+'</td>'
+            +'<td class="destra">'+numero(r.quantita_assegnata)+'</td>'
+            +'<td class="destra">'+numero(r.quantita_ceduta||0)+'</td>'
+            +'<td class="destra">'+numero(r.quantita_rientrata||0)+'</td>'
+            +'<td class="destra '+(f>0?"scarico":"")+'">'+numero(f)+'</td></tr>';
+        }).join("") : '<tr><td colspan="5">Nessun articolo ancora preparato.</td></tr>'}</tbody>
+      </table></div>
+      <div class="stato" style="margin-top:.9rem">
+        <div><div class="cifra">${numero(usciti)}</div><div class="voce">portati</div></div>
+        <div><div class="cifra">${numero(ceduti)}</div><div class="voce">ceduti</div></div>
+        <div class="${fuori>0?'avviso':''}"><div class="cifra">${numero(fuori)}</div><div class="voce">ancora fuori</div></div>
+        <div><div class="cifra">${euro(offerte)}</div><div class="voce">offerte raccolte</div></div>
+      </div>
+    </div>`;
+  }).join("") : '<div class="riquadro"><div class="vuoto"><strong>Nessun banchetto registrato.</strong>Creane uno prima di preparare gli articoli da portare.</div></div>'}`;
+}
+
+function formEvento(){
+  apriModale("Nuovo banchetto", `
+    <form id="formEvento">
+      <div class="campo"><label for="eTitolo">Titolo</label>
+        <input id="eTitolo" name="titolo" required placeholder="es. Festa del volontariato"></div>
+      <div class="griglia-2">
+        <div class="campo"><label for="eLuogo">Luogo</label><input id="eLuogo" name="luogo"></div>
+        <div class="campo"><label for="eData">Data</label>
+          <input id="eData" name="data_inizio" type="date" required value="${oggi()}"></div>
+      </div>
+      <div class="campo"><label for="eNote">Note</label><textarea id="eNote" name="note"></textarea></div>
+      <div class="azioni-fine"><button type="button" data-chiudi>Annulla</button>
+        <button type="submit" class="primario">Crea il banchetto</button></div>
+    </form>`);
+}
+
+function formAssegna(eventoUid){
+  const disponibili = DB.articoli.filter(a=>vive(a)&&a.attivo&&!a.archiviato&&a.tipo_articolo==="FINITO"&&giacenza(a.uid)>0);
+  apriModale("Prepara gli articoli", `
+    <p class="aiuto" style="margin-bottom:1rem">Gli articoli escono dalla bottega ma restano contati:
+      li ritroverai come «fuori per banchetti» finché non vengono ceduti o non rientrano.</p>
+    <form id="formAssegna">
+      <input type="hidden" name="evento_uid" value="${eventoUid}">
+      <div class="scorrevole"><table class="tabella">
+        <thead><tr><th>Articolo</th><th class="destra">In bottega</th><th class="destra">Da portare</th></tr></thead>
+        <tbody>${disponibili.map(a=>'<tr><td>'+esc(a.descrizione)+'</td>'
+          +'<td class="destra">'+formattaQta(giacenza(a.uid),a)+'</td>'
+          +'<td class="destra"><input type="number" min="0" max="'+giacenza(a.uid)+'" step="1" '
+          +'style="width:5.5rem" data-assegna-art="'+a.uid+'" value="0"></td></tr>').join("")}</tbody>
+      </table></div>
+      <div class="azioni-fine"><button type="button" data-chiudi>Annulla</button>
+        <button type="submit" class="primario">Registra la partenza</button></div>
+    </form>`);
+}
+
+function formRientri(eventoUid){
+  const righe = DB.evento_righe.filter(r=>r.evento_uid===eventoUid && vive(r));
+  apriModale("Registra i rientri", `
+    <p class="aiuto" style="margin-bottom:1rem">Conta quello che è tornato in bottega.
+      Se i numeri non tornano, la differenza resta segnalata come «ancora fuori».</p>
+    <form id="formRientri">
+      <input type="hidden" name="evento_uid" value="${eventoUid}">
+      <div class="scorrevole"><table class="tabella">
+        <thead><tr><th>Articolo</th><th class="destra">Attesi</th><th class="destra">Rientrati</th></tr></thead>
+        <tbody>${righe.map(r=>{
+          const a = trova("articoli", r.articolo_uid);
+          const attesi = r.quantita_assegnata-(r.quantita_ceduta||0)-(r.quantita_rientrata||0);
+          return '<tr><td>'+esc(a?a.descrizione:"?")+'</td>'
+            +'<td class="destra">'+numero(attesi)+'</td>'
+            +'<td class="destra"><input type="number" min="0" max="'+attesi+'" step="1" style="width:5.5rem" '
+            +'data-rientro="'+r.uid+'" value="'+attesi+'"></td></tr>';
+        }).join("")}</tbody>
+      </table></div>
+      <div class="campo" style="margin-top:1rem"><label for="rChiudi">
+        <input type="checkbox" id="rChiudi" name="chiudi" style="width:auto" checked> Chiudi il banchetto</label></div>
+      <div class="azioni-fine"><button type="button" data-chiudi>Annulla</button>
+        <button type="submit" class="primario">Registra i rientri</button></div>
+    </form>`);
+}
+
+/* ==========================================================================
+   9. LAVORAZIONI
+   Il grezzo entra, i volontari lavorano, esce un articolo finito.
+   ========================================================================== */
+function vistaLavorazioni(){
+  const lav = DB.lavorazioni.filter(vive).sort((a,b)=>b.data_inizio.localeCompare(a.data_inizio));
+  const oreAnno = DB.lavorazione_ore.filter(o=>vive(o)&&o.data.startsWith(String(new Date().getFullYear())))
+    .reduce((s,o)=>s+o.ore,0);
+  return `
+  <div class="intestazione-vista">
+    <div class="testo"><h1>Lavorazioni</h1>
+      <p>Nel ${new Date().getFullYear()} i volontari hanno donato ${numero(oreAnno)} ore di lavoro.</p></div>
+    <div class="azioni"><button class="primario" data-nuova-lavorazione>Nuova lavorazione</button></div>
+  </div>
+  <div class="nota nota-info">Il valore delle ore serve a proporre un'offerta e a raccontare
+    il contributo dei volontari nella relazione di missione. Non è un costo che entra in contabilità:
+    il lavoro del volontario è gratuito.</div>
+  ${lav.length ? lav.map(l=>{
+    const prod = trova("articoli", l.articolo_prodotto_uid);
+    const consumi = DB.lavorazione_consumi.filter(c=>c.lavorazione_uid===l.uid&&vive(c));
+    const ore = DB.lavorazione_ore.filter(o=>o.lavorazione_uid===l.uid&&vive(o));
+    const costoMat = consumi.reduce((s,c)=>s+c.quantita*c.costo_unitario,0);
+    const oreTot = ore.reduce((s,o)=>s+o.ore,0);
+    return `<div class="riquadro">
+      <div class="intestazione-vista" style="margin-bottom:.6rem">
+        <div class="testo"><h2>${esc(l.descrizione)}</h2>
+          <p>${dataBreve(l.data_inizio)} · produce ${esc(prod?prod.descrizione:"?")} · ${l.stato.toLowerCase()}</p></div>
+        <div class="azioni">${l.stato==="APERTA" ? '<button data-consumo="'+l.uid+'">Aggiungi materiali</button>'
+          +'<button data-ore="'+l.uid+'">Aggiungi ore</button>'
+          +'<button class="primario" data-chiudi-lavorazione="'+l.uid+'">Concludi</button>' : ''}</div>
+      </div>
+      <div class="griglia">
+        <div><label>Materiali usati</label><strong class="num">${euro(costoMat)}</strong></div>
+        <div><label>Ore donate</label><strong class="num">${numero(oreTot)}</strong></div>
+        <div><label>Valore del lavoro</label><strong class="num">${euro(oreTot*DB.impostazioni.tariffa_figurativa_oraria)}</strong></div>
+        <div><label>Offerta suggerita per pezzo</label><strong class="num">${
+          l.quantita_prodotta ? euro(calcolaOffertaSuggerita(costoMat/l.quantita_prodotta, oreTot/l.quantita_prodotta)) : "—"}</strong></div>
+      </div>
+      ${consumi.length ? '<h3 style="margin:1rem 0 .4rem">Materiali</h3><div class="scorrevole"><table class="tabella"><tbody>'
+        + consumi.map(c=>{const a=trova("articoli",c.articolo_uid);
+          return '<tr><td>'+esc(a?a.descrizione:"?")+'</td><td class="destra">'+numero(c.quantita)+'</td>'
+            +'<td class="destra">'+euro(c.quantita*c.costo_unitario)+'</td></tr>';}).join("")
+        + '</tbody></table></div>' : ''}
+      ${ore.length ? '<h3 style="margin:1rem 0 .4rem">Ore</h3><div class="scorrevole"><table class="tabella"><tbody>'
+        + ore.map(o=>'<tr><td>'+esc(nomePersona(o.volontario_uid))+'</td><td>'+esc(o.attivita||"")+'</td>'
+          +'<td class="destra">'+numero(o.ore)+' h</td></tr>').join("")
+        + '</tbody></table></div>' : ''}
+    </div>`;
+  }).join("") : '<div class="riquadro"><div class="vuoto"><strong>Nessuna lavorazione aperta.</strong>Creane una quando i volontari iniziano a trasformare del materiale grezzo.</div></div>'}`;
+}
+/* ==========================================================================
+   10. REGISTRO — tutti i movimenti, in ordine di tempo
+   ========================================================================== */
+function vistaRegistro(){
+  const movs = DB.movimenti.slice().sort((a,b)=>b.data.localeCompare(a.data)).slice(0,300);
+  return `
+  <div class="intestazione-vista">
+    <div class="testo"><h1>Registro</h1>
+      <p>Ogni entrata e ogni uscita, in ordine di tempo. Le registrazioni non si cancellano: si stornano.</p></div>
+  </div>
+  <div class="riquadro"><div class="scorrevole"><table class="tabella">
+    <thead><tr><th>Data</th><th>Articolo</th><th>Causale</th><th class="destra">Quantità</th><th></th></tr></thead>
+    <tbody>${movs.length ? movs.map(m=>{
+      const a = trova("articoli", m.articolo_uid);
+      const ann = movimentoAnnullato(m);
+      return '<tr class="'+(ann?"stornato":"")+'">'
+        +'<td>'+dataBreve(m.data)+'</td>'
+        +'<td>'+esc(a?a.descrizione:"?")+'</td>'
+        +'<td>'+esc(TIPI_MOVIMENTO[m.tipo].etichetta)+(m.causale?' — '+esc(m.causale):'')+'</td>'
+        +'<td class="destra '+(m.quantita>0?"carico":"scarico")+'">'+(m.quantita>0?"+":"")+numero(m.quantita)+'</td>'
+        +'<td class="destra">'+(ann||m.storno_di_uid?'':'<button class="piccolo" data-storna="'+m.uid+'">storna</button>')+'</td></tr>';
+    }).join("") : '<tr><td colspan="5">Il registro è vuoto.</td></tr>'}</tbody>
+  </table></div></div>`;
+}
+
+/* ==========================================================================
+   11. RENDICONTI
+   ========================================================================== */
+function daEsportare(){
+  const righe = [];
+  DB.uscite.filter(u=>vive(u)&&!u.esportazione_uid&&u.offerta_ricevuta>0).forEach(u=>{
+    const ev = u.evento_uid ? trova("eventi",u.evento_uid) : null;
+    righe.push({ origine:"USCITA", uid:u.uid, data:u.data, importo:u.offerta_ricevuta,
+      incasso:u.modalita_incasso, persona:u.persona_uid?nomePersona(u.persona_uid):"",
+      codice:(trova("persone",u.persona_uid)||{}).codice_gestionale||"",
+      causale: ev ? "Bottega — "+ev.titolo : "Bottega — cessione articoli" });
+  });
+  DB.offerte_libere.filter(o=>vive(o)&&!o.esportazione_uid).forEach(o=>{
+    righe.push({ origine:"OFFERTA", uid:o.uid, data:o.data, importo:o.importo, incasso:"",
+      persona:o.persona_uid?nomePersona(o.persona_uid):"",
+      codice:(trova("persone",o.persona_uid)||{}).codice_gestionale||"",
+      causale:"Bottega — offerta libera" });
+  });
+  return righe.sort((a,b)=>a.data.localeCompare(b.data));
+}
+
+function vistaRendiconti(){
+  const anno = String(new Date().getFullYear());
+  const uscite = DB.uscite.filter(vive);
+  const transazioni = uscite.filter(u=>u.modalita!=="REGALO");
+  const suggerito = transazioni.reduce((s,u)=>s+u.offerta_suggerita,0);
+  const ricevuto  = transazioni.reduce((s,u)=>s+u.offerta_ricevuta,0);
+  const regali = uscite.filter(u=>u.modalita==="REGALO");
+  const costoRegali = regali.reduce((s,u)=>{
+    return s + DB.uscite_righe.filter(r=>r.uscita_uid===u.uid).reduce((t,r)=>{
+      const a = trova("articoli", r.articolo_uid);
+      return t + r.quantita*(a?a.costo_unitario_acquisto:0);
+    },0);
+  },0);
+  const oreVol = {};
+  DB.lavorazione_ore.filter(o=>vive(o)&&o.data.startsWith(anno)).forEach(o=>{
+    oreVol[o.volontario_uid] = (oreVol[o.volontario_uid]||0) + o.ore;
+  });
+  const esport = daEsportare();
+
+  return `
+  <div class="intestazione-vista"><div class="testo"><h1>Rendiconti</h1>
+    <p>I numeri che servono per la contabilità e per la relazione di missione.</p></div></div>
+
+  <div class="riquadro">
+    <h2>Offerte suggerite e offerte ricevute</h2>
+    <div class="sottotitolo">Se lo scostamento è sistematicamente negativo, gli importi proposti sono alti per il vostro pubblico.</div>
+    <div class="stato">
+      <div><div class="cifra">${euro(suggerito)}</div><div class="voce">suggerito</div></div>
+      <div><div class="cifra">${euro(ricevuto)}</div><div class="voce">ricevuto</div></div>
+      <div class="${ricevuto<suggerito?'avviso':''}"><div class="cifra">${euro(ricevuto-suggerito)}</div><div class="voce">scostamento</div></div>
+      <div><div class="cifra">${transazioni.length}</div><div class="voce">transazioni</div></div>
+    </div>
+  </div>
+
+  <div class="riquadro">
+    <h2>Articoli donati</h2>
+    <div class="sottotitolo">Uscite in regalo: nessuna offerta, ma un valore che vale la pena raccontare.</div>
+    <div class="stato">
+      <div><div class="cifra">${regali.length}</div><div class="voce">regali registrati</div></div>
+      <div><div class="cifra">${euro(costoRegali)}</div><div class="voce">costo di quanto donato</div></div>
+    </div>
+  </div>
+
+  <div class="riquadro">
+    <h2>Ore donate dai volontari nel ${anno}</h2>
+    ${Object.keys(oreVol).length ? '<div class="scorrevole"><table class="tabella">'
+      + '<thead><tr><th>Volontario</th><th class="destra">Ore</th><th class="destra">Valorizzazione</th></tr></thead><tbody>'
+      + Object.entries(oreVol).map(([u,o])=>'<tr><td>'+esc(nomePersona(u))+'</td>'
+        +'<td class="destra">'+numero(o)+'</td>'
+        +'<td class="destra">'+euro(o*DB.impostazioni.tariffa_figurativa_oraria)+'</td></tr>').join("")
+      + '</tbody></table></div>'
+      : '<div class="vuoto">Nessuna ora registrata quest\'anno.</div>'}
+  </div>
+
+  <div class="riquadro">
+    <h2>Da riportare in contabilità</h2>
+    <div class="sottotitolo">Offerte non ancora trasferite nel gestionale. Una volta esportate spariscono da qui e non possono essere esportate due volte.</div>
+    ${esport.length ? `<div class="scorrevole"><table class="tabella">
+      <thead><tr><th>Data</th><th>Causale</th><th>Sostenitore</th><th class="destra">Importo</th></tr></thead>
+      <tbody>${esport.map(r=>'<tr><td>'+dataBreve(r.data)+'</td><td>'+esc(r.causale)+'</td>'
+        +'<td>'+esc(r.persona||"—")+(r.codice?' ('+esc(r.codice)+')':'')+'</td>'
+        +'<td class="destra">'+euro(r.importo)+'</td></tr>').join("")}</tbody>
+      <tfoot><tr><th colspan="3" class="destra">Totale</th>
+        <th class="destra">${euro(esport.reduce((s,r)=>s+r.importo,0))}</th></tr></tfoot>
+    </table></div>
+    <div class="azioni-fine"><button class="primario" data-esporta-contabilita>Esporta per il gestionale</button></div>`
+    : '<div class="vuoto">Tutto già riportato in contabilità.</div>'}
+  </div>`;
+}
+
+/* ==========================================================================
+   12. ANAGRAFICHE
+   ========================================================================== */
+function vistaAnagrafiche(){
+  const blocco = (titolo, sottotitolo, righe, azione, etichettaAzione) => `
+    <div class="riquadro">
+      <div class="intestazione-vista" style="margin-bottom:.6rem">
+        <div class="testo"><h2>${titolo}</h2><p>${sottotitolo}</p></div>
+        <div class="azioni"><button data-${azione}>${etichettaAzione}</button></div>
+      </div>
+      ${righe || '<div class="vuoto">Ancora niente.</div>'}
+    </div>`;
+
+  const persone = DB.persone.filter(vive);
+  const tabPersone = persone.length ? '<div class="scorrevole"><table class="tabella">'
+    + '<thead><tr><th>Nominativo</th><th>Ruolo</th><th>Codice gestionale</th></tr></thead><tbody>'
+    + persone.map(p=>'<tr><td>'+esc(p.nominativo)+'</td><td>'
+      + [p.e_sostenitore&&"sostenitore",p.e_volontario&&"volontario",p.e_fornitore&&"fornitore"]
+        .filter(Boolean).join(", ")
+      + '</td><td>'+esc(p.codice_gestionale||"—")+'</td></tr>').join("")
+    + '</tbody></table></div>' : "";
+
+  const cats = DB.categorie.filter(vive);
+  const tabCat = cats.length ? '<div class="elenco">' + cats.map(c=>
+    '<div style="padding:.4rem .1rem;border-bottom:1px solid var(--bordo)">'+esc(c.nome)+'</div>').join("") + '</div>' : "";
+
+  const provs = DB.provenienze.filter(vive);
+  const tabProv = provs.length ? '<div class="elenco">' + provs.map(p=>
+    '<div style="padding:.4rem .1rem;border-bottom:1px solid var(--bordo)">'+esc(nomeProvenienza(p.uid))+'</div>').join("") + '</div>' : "";
+
+  return `
+  <div class="intestazione-vista"><div class="testo"><h1>Anagrafiche</h1>
+    <p>Gli elenchi che compaiono nei menu a tendina delle altre schermate.</p></div></div>
+  ${blocco("Persone","Sostenitori, volontari e fornitori. Il codice gestionale è l'aggancio all'anagrafica del gestionale.",tabPersone,"nuova-persona","Aggiungi una persona")}
+  ${blocco("Categorie","Come sono raggruppati gli articoli in bottega.",tabCat,"nuova-categoria","Aggiungi una categoria")}
+  ${blocco("Provenienze","Villaggi e regioni da cui arrivano gli articoli.",tabProv,"nuova-provenienza","Aggiungi una provenienza")}`;
+}
+
+/* ==========================================================================
+   13. DATI, SINCRONIZZAZIONE E CONFLITTI
+   Nel prototipo lo scambio avviene con file: è esattamente quello che farà
+   l'app Android depositando i pacchetti nella cartella condivisa.
+   ========================================================================== */
+function pacchettoSincronizzazione(){
+  return {
+    formato:"bottega-guineaction-sync",
+    versione: VERSIONE,
+    dispositivo: DB.dispositivo,
+    generato_il: adesso(),
+    tabelle: {
+      categorie:DB.categorie, provenienze:DB.provenienze, persone:DB.persone,
+      articoli:DB.articoli, immagini:DB.immagini, movimenti:DB.movimenti,
+      uscite:DB.uscite, uscite_righe:DB.uscite_righe, offerte_libere:DB.offerte_libere,
+      eventi:DB.eventi, evento_righe:DB.evento_righe,
+      lavorazioni:DB.lavorazioni, lavorazione_consumi:DB.lavorazione_consumi,
+      lavorazione_ore:DB.lavorazione_ore
+    }
+  };
+}
+
+/* Fusione: i movimenti si aggiungono se l'uid è nuovo (registro append-only),
+   tutto il resto vince per data di modifica più recente. */
+function fondiPacchetto(p){
+  let aggiunte = 0, aggiornate = 0, ignorate = 0;
+  for(const [tabella, righe] of Object.entries(p.tabelle || {})){
+    if(!DB[tabella]) continue;
+    for(const r of righe){
+      const esistente = DB[tabella].find(x => x.uid === r.uid);
+      if(!esistente){ DB[tabella].push(r); aggiunte++; continue; }
+      if(tabella === "movimenti"){ ignorate++; continue; }
+      if((r.modificato_il||"") > (esistente.modificato_il||"")){
+        Object.assign(esistente, r); aggiornate++;
+      } else ignorate++;
+    }
+  }
+  DB.sincronizzazioni.push(nuovaRiga({
+    data:adesso(), direzione:"RICEZIONE", dispositivo_uid:(p.dispositivo||{}).uid,
+    righe_applicate:aggiunte+aggiornate, righe_trattate:aggiunte+aggiornate+ignorate, esito:"OK"
+  }));
+  verificaGiacenzeDopoFusione();
+  return { aggiunte, aggiornate, ignorate };
+}
+
+/* Dopo ogni fusione si ricontrolla che nessun articolo sia andato sotto zero */
+function verificaGiacenzeDopoFusione(){
+  DB.articoli.forEach(a=>{
+    const g = giacenza(a.uid);
+    if(g < 0 && !DB.conflitti.some(c=>c.riga_uid===a.uid && c.stato==="APERTO")){
+      DB.conflitti.push(nuovaRiga({
+        tabella:"articoli", riga_uid:a.uid,
+        tipo: a.tipo_gestione==="UNICO" ? "PEZZO_UNICO_DOPPIO" : "GIACENZA_NEGATIVA",
+        descrizione: a.descrizione + ": giacenza " + numero(g) + " dopo la sincronizzazione",
+        stato:"APERTO", rilevato_il: adesso()
+      }));
+    }
+    if(a.tipo_gestione === "UNICO") a.archiviato = (g + giacenzaInBanchetto(a.uid)) <= 0;
+  });
+}
+
+function scaricaFile(nome, contenuto, tipo){
+  const b = new Blob([contenuto], {type: tipo || "application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(b); a.download = nome;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+function vistaDati(){
+  const conflitti = DB.conflitti.filter(c=>c.stato==="APERTO");
+  const righe = ["articoli","movimenti","uscite","eventi","lavorazioni","persone"]
+    .map(t=>'<tr><td>'+t+'</td><td class="destra">'+DB[t].length+'</td></tr>').join("");
+
+  return `
+  <div class="intestazione-vista"><div class="testo"><h1>Dati e sincronizzazione</h1>
+    <p>Cinque dispositivi, una sola bottega. I dati si scambiano con file: nessun servizio esterno.</p></div></div>
+
+  ${conflitti.length ? `<div class="riquadro" style="border-color:#E4B5B0">
+    <h2>Conflitti da esaminare</h2>
+    <div class="sottotitolo">Situazioni che il sistema non può risolvere da solo: servono i tuoi occhi.</div>
+    ${conflitti.map(c=>`<div class="nota nota-errore">
+      <strong>${c.tipo==="PEZZO_UNICO_DOPPIO"?"Pezzo unico uscito due volte":"Giacenza negativa"}</strong><br>
+      ${esc(c.descrizione||"")}<br>
+      <span style="font-size:.8rem">Rilevato il ${dataBreve(c.rilevato_il)}</span>
+      <div class="azioni" style="margin-top:.5rem">
+        <button class="piccolo" data-risolvi-conflitto="${c.uid}">Segna come risolto</button></div>
+    </div>`).join("")}
+  </div>` : ""}
+
+  <div class="riquadro">
+    <h2>Scambio con gli altri dispositivi</h2>
+    <div class="sottotitolo">Esporta le tue novità nella cartella condivisa, poi importa quelle dei tuoi colleghi.
+      Importare due volte lo stesso pacchetto non crea duplicati.</div>
+    <div class="azioni">
+      <button class="primario" data-esporta-pacchetto>Esporta le mie novità</button>
+      <label class="bottone" style="display:inline-flex;align-items:center;margin:0">
+        Importa un pacchetto
+        <input type="file" id="importaPacchetto" accept=".json,application/json" style="display:none">
+      </label>
+    </div>
+    ${DB.sincronizzazioni.length ? '<h3 style="margin:1.2rem 0 .4rem">Ultimi scambi</h3>'
+      + '<div class="scorrevole"><table class="tabella"><tbody>'
+      + DB.sincronizzazioni.slice(-6).reverse().map(s=>'<tr><td>'+dataBreve(s.data)+'</td>'
+        +'<td>'+(s.direzione==="INVIO"?"inviato":"ricevuto")+'</td>'
+        +'<td class="destra">'+s.righe_applicate+' righe</td></tr>').join("")
+      + '</tbody></table></div>' : ''}
+  </div>
+
+  <div class="riquadro">
+    <h2>Questo dispositivo</h2>
+    <div class="campo"><label for="dEtichetta">Come si chiama</label>
+      <input id="dEtichetta" value="${esc(DB.dispositivo.etichetta)}"></div>
+    <div class="aiuto">Compare nell'intestazione e nei pacchetti che invii, così si capisce da dove arrivano i dati.</div>
+  </div>
+
+  <div class="riquadro">
+    <h2>Come calcolare l'offerta suggerita</h2>
+    <div class="griglia">
+      <div class="campo"><label for="iTariffa">Valore di un'ora di volontariato</label>
+        <input id="iTariffa" type="number" step="0.5" min="0" value="${DB.impostazioni.tariffa_figurativa_oraria}"></div>
+      <div class="campo"><label for="iMolt">Coefficiente di sostegno</label>
+        <input id="iMolt" type="number" step="0.1" min="1" value="${DB.impostazioni.moltiplicatore_sostegno}"></div>
+      <div class="campo"><label for="iArr">Arrotondamento</label>
+        <input id="iArr" type="number" step="0.5" min="0.5" value="${DB.impostazioni.arrotondamento_offerta}"></div>
+    </div>
+    <div class="campo"><label for="iBlocca">
+      <input type="checkbox" id="iBlocca" style="width:auto" ${DB.impostazioni.blocca_giacenza_negativa?"checked":""}>
+      Impedisci le uscite superiori alla giacenza</label>
+      <div class="aiuto">Toglilo solo se in bottega il conteggio è spesso in ritardo rispetto alla realtà.</div></div>
+  </div>
+
+  <div class="riquadro">
+    <h2>Copia di sicurezza</h2>
+    <div class="sottotitolo">Il prototipo tiene i dati solo finché la pagina resta aperta: salva il file prima di chiuderla.</div>
+    <div class="scorrevole"><table class="tabella">
+      <thead><tr><th>Tabella</th><th class="destra">Righe</th></tr></thead><tbody>${righe}</tbody></table></div>
+    <div class="azioni" style="margin-top:1rem">
+      <button data-backup>Salva tutto su file</button>
+      <label class="bottone" style="display:inline-flex;align-items:center;margin:0">
+        Ricarica da file <input type="file" id="ripristina" accept=".json" style="display:none"></label>
+      <button data-esempio>Carica dati di esempio</button>
+      <button class="pericolo" data-azzera>Svuota tutto</button>
+    </div>
+  </div>`;
+}
+/* ==========================================================================
+   14. MODULI BREVI
+   ========================================================================== */
+function formCarico(articoloUid){
+  const a = trova("articoli", articoloUid);
+  apriModale("Carica in magazzino", `
+    <form id="formCarico">
+      <input type="hidden" name="articolo_uid" value="${articoloUid}">
+      <p class="aiuto">${esc(a.descrizione)} — in bottega ora: ${formattaQta(giacenza(articoloUid), a)}</p>
+      <div class="griglia-2">
+        <div class="campo"><label for="cQta">Quantità che entra</label>
+          <input id="cQta" name="quantita" type="number" step="1" min="1" value="1" required></div>
+        <div class="campo"><label for="cTipo">Provenienza del carico</label>
+          <select id="cTipo" name="tipo">
+            <option value="CARICO_ACQUISTO">acquisto</option>
+            <option value="CARICO_DONAZIONE">donazione ricevuta</option>
+            <option value="RETTIFICA_INVENTARIO">rettifica da inventario</option>
+          </select></div>
+      </div>
+      <div class="campo"><label for="cNote">Causale</label><input id="cNote" name="causale"></div>
+      <div class="azioni-fine"><button type="button" data-chiudi>Annulla</button>
+        <button type="submit" class="primario">Registra il carico</button></div>
+    </form>`);
+}
+
+function formLavorazione(){
+  const finiti = DB.articoli.filter(a=>vive(a)&&a.attivo);
+  apriModale("Nuova lavorazione", `
+    <form id="formLavorazione">
+      <div class="campo"><label for="lDesc">Che cosa state facendo</label>
+        <input id="lDesc" name="descrizione" required placeholder="es. Borse dal Bazin arrivato a marzo"></div>
+      <div class="campo"><label for="lProd">Articolo che ne uscirà</label>
+        <select id="lProd" name="articolo_prodotto_uid" required>
+          <option value="">— scegli —</option>
+          ${finiti.map(a=>'<option value="'+a.uid+'">'+esc(a.descrizione)+'</option>').join("")}
+        </select>
+        <div class="aiuto">Se non esiste ancora, chiudi e crealo prima come articolo.</div></div>
+      <div class="azioni-fine"><button type="button" data-chiudi>Annulla</button>
+        <button type="submit" class="primario">Apri la lavorazione</button></div>
+    </form>`);
+}
+
+function formConsumo(lavUid){
+  const materiali = DB.articoli.filter(a=>vive(a)&&a.attivo&&giacenza(a.uid)>0
+    && (a.tipo_articolo==="GREZZO"||a.tipo_articolo==="MATERIALE"));
+  apriModale("Materiali usati", `
+    <form id="formConsumo">
+      <input type="hidden" name="lavorazione_uid" value="${lavUid}">
+      ${materiali.length ? `<div class="campo"><label for="mArt">Materiale</label>
+        <select id="mArt" name="articolo_uid" required>
+          ${materiali.map(a=>'<option value="'+a.uid+'">'+esc(a.descrizione)
+            +' ('+formattaQta(giacenza(a.uid),a)+')</option>').join("")}
+        </select></div>
+      <div class="campo"><label for="mQta">Quantità usata</label>
+        <input id="mQta" name="quantita" type="number" step="0.01" min="0.01" value="1" required></div>
+      <div class="azioni-fine"><button type="button" data-chiudi>Annulla</button>
+        <button type="submit" class="primario">Aggiungi</button></div>`
+      : '<div class="vuoto"><strong>Nessun materiale disponibile.</strong>Registra prima l\'entrata di materiale grezzo o di consumo.</div>'}
+    </form>`);
+}
+
+function formOre(lavUid){
+  const volontari = DB.persone.filter(p=>vive(p)&&p.e_volontario);
+  apriModale("Ore donate", `
+    <form id="formOre">
+      <input type="hidden" name="lavorazione_uid" value="${lavUid}">
+      ${volontari.length ? `<div class="campo"><label for="oVol">Volontario</label>
+        <select id="oVol" name="volontario_uid" required>
+          ${volontari.map(p=>'<option value="'+p.uid+'">'+esc(p.nominativo)+'</option>').join("")}</select></div>
+      <div class="griglia-2">
+        <div class="campo"><label for="oOre">Ore</label>
+          <input id="oOre" name="ore" type="number" step="0.25" min="0.25" value="2" required></div>
+        <div class="campo"><label for="oData">Giorno</label>
+          <input id="oData" name="data" type="date" value="${oggi()}"></div>
+      </div>
+      <div class="campo"><label for="oAtt">Attività</label>
+        <input id="oAtt" name="attivita" placeholder="es. cucito, rifinitura"></div>
+      <div class="azioni-fine"><button type="button" data-chiudi>Annulla</button>
+        <button type="submit" class="primario">Registra le ore</button></div>`
+      : '<div class="vuoto"><strong>Nessun volontario in anagrafica.</strong>Aggiungine uno dalla sezione Anagrafiche.</div>'}
+    </form>`);
+}
+
+function formChiusuraLavorazione(lavUid){
+  const l = trova("lavorazioni", lavUid);
+  const prod = trova("articoli", l.articolo_prodotto_uid);
+  const consumi = DB.lavorazione_consumi.filter(c=>c.lavorazione_uid===lavUid&&vive(c));
+  const ore = DB.lavorazione_ore.filter(o=>o.lavorazione_uid===lavUid&&vive(o)).reduce((s,o)=>s+o.ore,0);
+  const costo = consumi.reduce((s,c)=>s+c.quantita*c.costo_unitario,0);
+  apriModale("Concludi la lavorazione", `
+    <form id="formChiusuraLav">
+      <input type="hidden" name="lavorazione_uid" value="${lavUid}">
+      <p class="aiuto">Materiali usati per ${euro(costo)}, ${numero(ore)} ore donate.</p>
+      <div class="campo"><label for="pQta">Quanti pezzi sono venuti fuori</label>
+        <input id="pQta" name="quantita" type="number" step="1" min="1" value="1" required></div>
+      <div class="campo"><label for="pOff">Offerta suggerita per pezzo</label>
+        <input id="pOff" name="offerta" type="number" step="0.5" min="0" value="${calcolaOffertaSuggerita(costo, ore)}">
+        <div class="aiuto">Calcolata dai materiali e dalle ore. Correggila se il valore non ti convince.</div></div>
+      <div class="nota nota-info">Il materiale usato viene scaricato dal magazzino e
+        ${esc(prod?prod.descrizione:"l'articolo prodotto")} viene caricato.</div>
+      <div class="azioni-fine"><button type="button" data-chiudi>Annulla</button>
+        <button type="submit" class="primario">Concludi e carica i pezzi</button></div>
+    </form>`);
+}
+
+function formPersona(){
+  apriModale("Nuova persona", `
+    <form id="formPersona">
+      <div class="campo"><label for="pNome">Nominativo</label><input id="pNome" name="nominativo" required></div>
+      <fieldset><legend>Ruolo</legend>
+        <label><input type="checkbox" name="e_sostenitore" style="width:auto"> sostenitore</label>
+        <label><input type="checkbox" name="e_volontario" style="width:auto"> volontario</label>
+        <label><input type="checkbox" name="e_fornitore" style="width:auto"> fornitore</label>
+      </fieldset>
+      <div class="campo"><label for="pCod">Codice nel gestionale</label>
+        <input id="pCod" name="codice_gestionale" placeholder="es. S24">
+        <div class="aiuto">Serve a far corrispondere questa persona all'anagrafica del gestionale.</div></div>
+      <div class="griglia-2">
+        <div class="campo"><label for="pMail">Email</label><input id="pMail" name="email" type="email"></div>
+        <div class="campo"><label for="pTel">Telefono</label><input id="pTel" name="telefono"></div>
+      </div>
+      <div class="azioni-fine"><button type="button" data-chiudi>Annulla</button>
+        <button type="submit" class="primario">Aggiungi</button></div>
+    </form>`);
+}
+
+function formCategoria(){
+  apriModale("Nuova categoria", `
+    <form id="formCategoria">
+      <div class="campo"><label for="kNome">Nome</label>
+        <input id="kNome" name="nome" required placeholder="es. Strumenti musicali"></div>
+      <div class="azioni-fine"><button type="button" data-chiudi>Annulla</button>
+        <button type="submit" class="primario">Aggiungi</button></div>
+    </form>`);
+}
+
+function formProvenienza(){
+  apriModale("Nuova provenienza", `
+    <form id="formProvenienza">
+      <div class="griglia-2">
+        <div class="campo"><label for="vLoc">Località</label>
+          <input id="vLoc" name="localita" required placeholder="es. Kindia"></div>
+        <div class="campo"><label for="vReg">Regione</label><input id="vReg" name="regione"></div>
+      </div>
+      <div class="azioni-fine"><button type="button" data-chiudi>Annulla</button>
+        <button type="submit" class="primario">Aggiungi</button></div>
+    </form>`);
+}
+
+/* ==========================================================================
+   15. RACCOLTA DEGLI EVENTI DELL'INTERFACCIA
+   Un solo ascoltatore sul documento: l'interfaccia si ridisegna spesso e
+   riagganciare ogni volta i singoli pulsanti sarebbe fragile.
+   ========================================================================== */
+let modificheNonSalvate = false;
+function salvaLocale(){ modificheNonSalvate = true; }
+
+document.addEventListener("click", ev => {
+  const b = ev.target.closest("button, [data-chiudi]");
+  if(!b) return;
+  const d = b.dataset || {};
+
+  if(b.id === "chiudiModale" || d.chiudi !== undefined) return chiudiModale();
+  if(d.vai) return vaiA(d.vai);
+
+  /* --- articoli --- */
+  if(d.articolo)          return apriArticolo(d.articolo);
+  if(d.nuovoArticolo !== undefined){ fotoInAttesa = []; return formArticolo(); }
+  if(d.modificaArticolo){ fotoInAttesa = []; return formArticolo(d.modificaArticolo); }
+  if(d.carica)            return formCarico(d.carica);
+  if(d.uscitaRapida){
+    const a = trova("articoli", d.uscitaRapida);
+    carrello.righe = [{ articolo_uid:a.uid, quantita:1, offerta_unitaria:a.offerta_suggerita||0 }];
+    chiudiModale(); return vaiA("uscita");
+  }
+  if(d.storna){
+    const esito = stornaMovimento(d.storna, "Storno registrato dall'interfaccia");
+    salvaLocale(); chiudiModale(); disegna();
+    return avvisa(esito.ok ? "Movimento stornato." : esito.errore);
+  }
+  if(d.gestione){
+    const f = document.getElementById("formArticolo");
+    f.elements.tipo_gestione.value = d.gestione;
+    f.querySelectorAll("[data-gestione]").forEach(x =>
+      x.setAttribute("aria-pressed", String(x.dataset.gestione === d.gestione)));
+    return;
+  }
+  if(b.id === "calcolaOfferta"){
+    const f = document.getElementById("formArticolo").elements;
+    f.offerta_suggerita.value = calcolaOffertaSuggerita(f.costo_unitario_acquisto.value, f.ore_lavoro.value);
+    return;
+  }
+
+  /* --- uscita --- */
+  if(d.modalita){ carrello.modalita = d.modalita; return disegna(); }
+  if(d.togliRiga !== undefined){ carrello.righe.splice(Number(d.togliRiga),1); return disegna(); }
+  if(d.svuotaCarrello !== undefined){
+    carrello = { modalita:carrello.modalita, righe:[], persona_uid:"", evento_uid:"",
+                 offerta_ricevuta:"", incasso:"CONTANTI", note:"" };
+    return disegna();
+  }
+  if(d.confermaUscita !== undefined) return confermaUscita();
+
+  /* --- banchetti --- */
+  if(d.nuovoEvento !== undefined) return formEvento();
+  if(d.assegna)      return formAssegna(d.assegna);
+  if(d.chiudiEvento) return formRientri(d.chiudiEvento);
+
+  /* --- lavorazioni --- */
+  if(d.nuovaLavorazione !== undefined) return formLavorazione();
+  if(d.consumo)          return formConsumo(d.consumo);
+  if(d.ore)              return formOre(d.ore);
+  if(d.chiudiLavorazione) return formChiusuraLavorazione(d.chiudiLavorazione);
+
+  /* --- anagrafiche --- */
+  if(d.nuovaPersona !== undefined)     return formPersona();
+  if(d.nuovaCategoria !== undefined)   return formCategoria();
+  if(d.nuovaProvenienza !== undefined) return formProvenienza();
+
+  /* --- dati --- */
+  if(d.esportaPacchetto !== undefined){
+    const p = pacchettoSincronizzazione();
+    DB.sincronizzazioni.push(nuovaRiga({ data:adesso(), direzione:"INVIO",
+      dispositivo_uid:DB.dispositivo.uid, righe_applicate:DB.movimenti.length, esito:"OK" }));
+    scaricaFile("bottega_" + DB.dispositivo.uid.slice(0,8) + "_" + oggi() + ".json",
+      JSON.stringify(p, null, 1));
+    disegna();
+    return avvisa("Pacchetto esportato: mettilo nella cartella condivisa.");
+  }
+  if(d.backup !== undefined){
+    scaricaFile("bottega_backup_" + oggi() + ".json", JSON.stringify(DB, null, 1));
+    modificheNonSalvate = false;
+    return avvisa("Copia salvata.");
+  }
+  if(d.esempio !== undefined){ caricaEsempio(); svuotaCarrello(); disegna();
+    return avvisa("Dati di esempio caricati."); }
+  if(d.azzera !== undefined){
+    if(confirm("Vengono cancellati tutti i dati di questo dispositivo. Procedo?")){
+      DB = databaseVuoto(); anagraficheIniziali(); svuotaCarrello(); disegna();
+      avvisa("Tutto svuotato.");
+    }
+    return;
+  }
+  if(d.risolviConflitto){
+    const c = trova("conflitti", d.risolviConflitto);
+    if(c){ c.stato = "RISOLTO"; c.risolto_il = adesso(); tocca(c); }
+    salvaLocale(); disegna(); return avvisa("Conflitto archiviato.");
+  }
+  if(d.esportaContabilita !== undefined){
+    const righe = daEsportare();
+    if(!righe.length) return avvisa("Non c'è niente da esportare.");
+    const e = nuovaRiga({ data:adesso(), periodo_da:righe[0].data, periodo_a:righe[righe.length-1].data,
+      righe_esportate:righe.length, totale_offerte:righe.reduce((s,r)=>s+r.importo,0) });
+    DB.esportazioni.push(e);
+    righe.forEach(r => {
+      const t = r.origine === "USCITA" ? "uscite" : "offerte_libere";
+      const riga = trova(t, r.uid);
+      if(riga){ riga.esportazione_uid = e.uid; tocca(riga); }
+    });
+    const csv = ["uid;data;causale;codice_gestionale;nominativo;importo;incasso"]
+      .concat(righe.map(r=>[r.uid,r.data,r.causale,r.codice,r.persona,
+        r.importo.toFixed(2).replace(".",","),r.incasso].join(";"))).join("\n");
+    scaricaFile("contabilita_bottega_" + oggi() + ".csv", "\uFEFF"+csv, "text/csv");
+    salvaLocale(); disegna();
+    return avvisa(righe.length + " righe esportate per il gestionale.");
+  }
+  if(b.id === "fArch"){ filtri.mostraArchiviati = !filtri.mostraArchiviati; return disegna(); }
+});
+
+/* --- campi che cambiano valore ------------------------------------------ */
+document.addEventListener("input", ev => {
+  const t = ev.target, d = t.dataset || {};
+  if(t.id === "fTesto"){ filtri.testo = t.value; const p = t.selectionStart; disegna();
+    const n = document.getElementById("fTesto"); if(n){ n.focus(); n.setSelectionRange(p,p); } return; }
+  if(t.id === "uRicevuta")  { carrello.offerta_ricevuta = t.value; return; }
+  if(t.id === "uNote")      { carrello.note = t.value; return; }
+  if(d.rigaQta !== undefined){ carrello.righe[d.rigaQta].quantita = Math.max(0.01, Number(t.value)||0);
+    aggiornaTotaleCarrello(); return; }
+  if(d.rigaOff !== undefined){ carrello.righe[d.rigaOff].offerta_unitaria = Number(t.value)||0;
+    aggiornaTotaleCarrello(); return; }
+  if(t.id === "dEtichetta"){ DB.dispositivo.etichetta = t.value;
+    document.getElementById("etichettaDispositivo").textContent = t.value; return; }
+  if(t.id === "iTariffa"){ DB.impostazioni.tariffa_figurativa_oraria = Number(t.value)||0; return; }
+  if(t.id === "iMolt")   { DB.impostazioni.moltiplicatore_sostegno = Number(t.value)||1; return; }
+  if(t.id === "iArr")    { DB.impostazioni.arrotondamento_offerta = Number(t.value)||0.5; return; }
+});
+
+function aggiornaTotaleCarrello(){
+  const t = document.querySelector("tfoot .num");
+  if(t) t.textContent = euro(totaleSuggerito());
+}
+
+document.addEventListener("change", async ev => {
+  const t = ev.target;
+  if(t.id === "fCat")  { filtri.categoria = t.value; return disegna(); }
+  if(t.id === "fTipo") { filtri.tipo = t.value; return disegna(); }
+  if(t.id === "iBlocca"){ DB.impostazioni.blocca_giacenza_negativa = t.checked; return; }
+  if(t.id === "uPersona"){ carrello.persona_uid = t.value; return; }
+  if(t.id === "uEvento") { carrello.evento_uid = t.value; return; }
+  if(t.id === "uIncasso"){ carrello.incasso = t.value; return; }
+
+  if(t.id === "uSel" && t.value){
+    const a = trova("articoli", t.value);
+    const esistente = carrello.righe.find(r=>r.articolo_uid===a.uid);
+    if(esistente) esistente.quantita += 1;
+    else carrello.righe.push({ articolo_uid:a.uid, quantita:1,
+      offerta_unitaria: carrello.modalita==="REGALO" ? 0 : (a.offerta_suggerita||0) });
+    return disegna();
+  }
+
+  if(t.id === "aFoto"){
+    for(const file of t.files){
+      const piena = await riduciImmagine(file, 900);
+      const mini  = await riduciImmagine(file, 240);
+      fotoInAttesa.push({ percorso_file:file.name, nome_file:file.name, miniatura:mini, piena });
+    }
+    const box = document.getElementById("anteprime");
+    if(box) box.innerHTML = fotoInAttesa.map(f =>
+      '<img src="'+f.miniatura+'" alt="" style="height:64px;border-radius:6px">').join("");
+    return;
+  }
+
+  if(t.id === "importaPacchetto" && t.files[0]){
+    try{
+      const p = JSON.parse(await t.files[0].text());
+      if(p.formato !== "bottega-guineaction-sync")
+        return avvisa("Questo file non è un pacchetto di sincronizzazione della bottega.");
+      const r = fondiPacchetto(p);
+      salvaLocale(); disegna();
+      avvisa(r.aggiunte+" righe nuove, "+r.aggiornate+" aggiornate, "+r.ignorate+" già presenti.");
+    }catch(e){ avvisa("Il file non è leggibile: "+e.message); }
+    return;
+  }
+
+  if(t.id === "ripristina" && t.files[0]){
+    try{
+      const d = JSON.parse(await t.files[0].text());
+      if(!d.articoli || !d.movimenti) return avvisa("Questo file non è una copia della bottega.");
+      DB = Object.assign(databaseVuoto(), d);
+      svuotaCarrello(); modificheNonSalvate = false; disegna(); avvisa("Copia ricaricata.");
+    }catch(e){ avvisa("Il file non è leggibile: "+e.message); }
+    return;
+  }
+});
+
+/* --- invio dei moduli ---------------------------------------------------- */
+document.addEventListener("submit", ev => {
+  ev.preventDefault();
+  const f = ev.target, dati = Object.fromEntries(new FormData(f));
+
+  if(f.id === "formArticolo"){
+    const esistente = dati.uid ? trova("articoli", dati.uid) : null;
+    const campi = {
+      descrizione: dati.descrizione.trim(),
+      categoria_uid: dati.categoria_uid || null,
+      provenienza_uid: dati.provenienza_uid || null,
+      tipo_gestione: dati.tipo_gestione,
+      tipo_articolo: dati.tipo_articolo,
+      unita_misura: dati.unita_misura || "pz",
+      costo_unitario_acquisto: Number(dati.costo_unitario_acquisto)||0,
+      ore_lavoro: Number(dati.ore_lavoro)||0,
+      valorizzazione_lavoro: (Number(dati.ore_lavoro)||0) * DB.impostazioni.tariffa_figurativa_oraria,
+      offerta_suggerita: dati.offerta_suggerita === "" ? null : Number(dati.offerta_suggerita),
+      codice: dati.codice || null,
+      giacenza_minima: Number(dati.giacenza_minima)||0,
+      note: dati.note || null,
+      attivo: true, archiviato: esistente ? esistente.archiviato : false
+    };
+    let art;
+    if(esistente){ Object.assign(esistente, campi); tocca(esistente); art = esistente; }
+    else { art = nuovaRiga(campi); DB.articoli.push(art); }
+
+    fotoInAttesa.forEach((foto,i) => DB.immagini.push(nuovaRiga({
+      articolo_uid: art.uid, percorso_file: foto.percorso_file, nome_file: foto.nome_file,
+      miniatura: foto.miniatura, principale: i === 0 &&
+        !DB.immagini.some(x=>x.articolo_uid===art.uid && x.principale)
+    })));
+    fotoInAttesa = [];
+
+    if(!esistente && Number(dati.quantita_iniziale) > 0){
+      const q = art.tipo_gestione === "UNICO" ? 1 : Number(dati.quantita_iniziale);
+      registraMovimento({ articolo_uid:art.uid, tipo:dati.origine, quantita:q,
+        costo_unitario:art.costo_unitario_acquisto });
+    }
+    salvaLocale(); chiudiModale(); disegna();
+    return avvisa(esistente ? "Articolo aggiornato." : "Articolo aggiunto.");
+  }
+
+  if(f.id === "formCarico"){
+    const esito = registraMovimento({ articolo_uid:dati.articolo_uid, tipo:dati.tipo,
+      quantita: dati.tipo==="RETTIFICA_INVENTARIO" ? Number(dati.quantita) : Number(dati.quantita),
+      causale: dati.causale || null, forza: dati.tipo==="RETTIFICA_INVENTARIO" });
+    salvaLocale(); chiudiModale(); disegna();
+    return avvisa(esito.ok ? "Carico registrato." : esito.errore);
+  }
+
+  if(f.id === "formEvento"){
+    DB.eventi.push(nuovaRiga({ titolo:dati.titolo, luogo:dati.luogo||null,
+      data_inizio:dati.data_inizio, stato:"PIANIFICATO", note:dati.note||null,
+      offerte_totali_raccolte:0 }));
+    salvaLocale(); chiudiModale(); disegna();
+    return avvisa("Banchetto creato.");
+  }
+
+  if(f.id === "formAssegna"){
+    let n = 0;
+    f.querySelectorAll("[data-assegna-art]").forEach(inp => {
+      const q = Number(inp.value)||0;
+      if(q <= 0) return;
+      const esito = registraMovimento({ articolo_uid:inp.dataset.assegnaArt,
+        tipo:"SCARICO_BANCHETTO", quantita:q, evento_uid:dati.evento_uid });
+      if(!esito.ok) return avvisa(esito.errore);
+      let riga = DB.evento_righe.find(r=>r.evento_uid===dati.evento_uid && r.articolo_uid===inp.dataset.assegnaArt);
+      if(riga){ riga.quantita_assegnata += q; tocca(riga); }
+      else DB.evento_righe.push(nuovaRiga({ evento_uid:dati.evento_uid,
+        articolo_uid:inp.dataset.assegnaArt, quantita_assegnata:q,
+        quantita_rientrata:0, quantita_ceduta:0 }));
+      n++;
+    });
+    const e = trova("eventi", dati.evento_uid);
+    if(e && n){ e.stato = "IN_CORSO"; tocca(e); }
+    salvaLocale(); chiudiModale(); disegna();
+    return avvisa(n + " articoli pronti per il banchetto.");
+  }
+
+  if(f.id === "formRientri"){
+    f.querySelectorAll("[data-rientro]").forEach(inp => {
+      const q = Number(inp.value)||0;
+      if(q <= 0) return;
+      const riga = trova("evento_righe", inp.dataset.rientro);
+      if(!riga) return;
+      registraMovimento({ articolo_uid:riga.articolo_uid, tipo:"CARICO_RIENTRO_BANCHETTO",
+        quantita:q, evento_uid:riga.evento_uid });
+      riga.quantita_rientrata = (riga.quantita_rientrata||0) + q; tocca(riga);
+    });
+    if(dati.chiudi){
+      const e = trova("eventi", dati.evento_uid);
+      if(e){ e.stato = "CHIUSO"; e.data_fine = oggi();
+        e.offerte_totali_raccolte = DB.uscite.filter(u=>u.evento_uid===e.uid)
+          .reduce((s,u)=>s+u.offerta_ricevuta,0); tocca(e); }
+    }
+    salvaLocale(); chiudiModale(); disegna();
+    return avvisa("Rientri registrati.");
+  }
+
+  if(f.id === "formLavorazione"){
+    DB.lavorazioni.push(nuovaRiga({ descrizione:dati.descrizione,
+      articolo_prodotto_uid:dati.articolo_prodotto_uid, quantita_prodotta:0,
+      data_inizio:oggi(), stato:"APERTA", costo_materiali:0, ore_totali:0, valorizzazione_lavoro:0 }));
+    salvaLocale(); chiudiModale(); disegna();
+    return avvisa("Lavorazione aperta.");
+  }
+
+  if(f.id === "formConsumo"){
+    const a = trova("articoli", dati.articolo_uid);
+    const esito = registraMovimento({ articolo_uid:a.uid, tipo:"SCARICO_LAVORAZIONE",
+      quantita:Number(dati.quantita), lavorazione_uid:dati.lavorazione_uid });
+    if(!esito.ok){ chiudiModale(); return avvisa(esito.errore); }
+    DB.lavorazione_consumi.push(nuovaRiga({ lavorazione_uid:dati.lavorazione_uid,
+      articolo_uid:a.uid, quantita:Number(dati.quantita), costo_unitario:a.costo_unitario_acquisto }));
+    salvaLocale(); chiudiModale(); disegna();
+    return avvisa("Materiale scaricato dal magazzino.");
+  }
+
+  if(f.id === "formOre"){
+    DB.lavorazione_ore.push(nuovaRiga({ lavorazione_uid:dati.lavorazione_uid,
+      volontario_uid:dati.volontario_uid, data:dati.data||oggi(), ore:Number(dati.ore),
+      tariffa_figurativa:DB.impostazioni.tariffa_figurativa_oraria, attivita:dati.attivita||null }));
+    salvaLocale(); chiudiModale(); disegna();
+    return avvisa("Ore registrate.");
+  }
+
+  if(f.id === "formChiusuraLav"){
+    const l = trova("lavorazioni", dati.lavorazione_uid);
+    const q = Number(dati.quantita);
+    const consumi = DB.lavorazione_consumi.filter(c=>c.lavorazione_uid===l.uid);
+    const costo = consumi.reduce((s,c)=>s+c.quantita*c.costo_unitario,0);
+    const ore = DB.lavorazione_ore.filter(o=>o.lavorazione_uid===l.uid).reduce((s,o)=>s+o.ore,0);
+    registraMovimento({ articolo_uid:l.articolo_prodotto_uid, tipo:"CARICO_PRODUZIONE",
+      quantita:q, costo_unitario: q ? costo/q : 0, lavorazione_uid:l.uid,
+      causale:"Prodotto dalla lavorazione: "+l.descrizione });
+    const prod = trova("articoli", l.articolo_prodotto_uid);
+    if(prod){
+      prod.offerta_suggerita = Number(dati.offerta);
+      prod.costo_unitario_prodotto = q ? costo/q : 0;
+      prod.valorizzazione_lavoro = q ? (ore/q)*DB.impostazioni.tariffa_figurativa_oraria : 0;
+      tocca(prod);
+    }
+    Object.assign(l, { quantita_prodotta:q, stato:"CHIUSA", data_fine:oggi(),
+      costo_materiali:costo, ore_totali:ore,
+      valorizzazione_lavoro: ore*DB.impostazioni.tariffa_figurativa_oraria });
+    tocca(l);
+    salvaLocale(); chiudiModale(); disegna();
+    return avvisa(q + " pezzi caricati in bottega.");
+  }
+
+  if(f.id === "formPersona"){
+    DB.persone.push(nuovaRiga({ nominativo:dati.nominativo,
+      e_sostenitore:!!dati.e_sostenitore, e_volontario:!!dati.e_volontario,
+      e_fornitore:!!dati.e_fornitore, codice_gestionale:dati.codice_gestionale||null,
+      origine_gestionale:false, email:dati.email||null, telefono:dati.telefono||null, attivo:true }));
+    salvaLocale(); chiudiModale(); disegna(); return avvisa("Persona aggiunta.");
+  }
+  if(f.id === "formCategoria"){
+    DB.categorie.push(nuovaRiga({ nome:dati.nome, ordine:99, attiva:true }));
+    salvaLocale(); chiudiModale(); disegna(); return avvisa("Categoria aggiunta.");
+  }
+  if(f.id === "formProvenienza"){
+    DB.provenienze.push(nuovaRiga({ localita:dati.localita, regione:dati.regione||null,
+      paese:"Guinea Conakry" }));
+    salvaLocale(); chiudiModale(); disegna(); return avvisa("Provenienza aggiunta.");
+  }
+});
+
+document.addEventListener("keydown", ev => {
+  if(ev.key === "Escape" && !document.getElementById("velo").hidden) chiudiModale();
+});
+document.getElementById("velo").addEventListener("click", ev => {
+  if(ev.target.id === "velo") chiudiModale();
+});
+window.addEventListener("beforeunload", ev => {
+  if(modificheNonSalvate){ ev.preventDefault(); ev.returnValue = ""; }
+});
+
+/* ==========================================================================
+   16. DATI INIZIALI E DI ESEMPIO
+   ========================================================================== */
+function anagraficheIniziali(){
+  ["Artigianato","Stoffe","Pubblicazioni","Libri","CD e audiovisivi","Calendari",
+   "Fotografie","Materiali per lavorazione","Altro"].forEach((n,i) =>
+    DB.categorie.push(nuovaRiga({ nome:n, ordine:(i+1)*10, attiva:true })));
+}
+
+function caricaEsempio(){
+  DB = databaseVuoto();
+  DB.dispositivo.etichetta = "Tablet della bottega";
+  anagraficheIniziali();
+  ["Kindia","Boké","Conakry","Nzérékoré"].forEach(l =>
+    DB.provenienze.push(nuovaRiga({ localita:l, regione:null, paese:"Guinea Conakry" })));
+  const cat = n => (DB.categorie.find(c=>c.nome===n)||{}).uid;
+  const prov = n => (DB.provenienze.find(p=>p.localita===n)||{}).uid;
+
+  const volontaria = nuovaRiga({ nominativo:"Volontaria di esempio", e_volontario:true, attivo:true });
+  const sostenitore = nuovaRiga({ nominativo:"Sostenitore di esempio", e_sostenitore:true,
+    codice_gestionale:"A101", attivo:true });
+  DB.persone.push(volontaria, sostenitore);
+
+  const aggiungi = (d, opzioni, qta, tipo) => {
+    const a = nuovaRiga(Object.assign({
+      descrizione:d, tipo_gestione:"SERIE", tipo_articolo:"FINITO", unita_misura:"pz",
+      costo_unitario_acquisto:0, ore_lavoro:0, valorizzazione_lavoro:0,
+      offerta_suggerita:null, giacenza_minima:0, attivo:true, archiviato:false
+    }, opzioni));
+    DB.articoli.push(a);
+    if(qta) registraMovimento({ articolo_uid:a.uid, tipo:tipo||"CARICO_ACQUISTO",
+      quantita:qta, costo_unitario:a.costo_unitario_acquisto });
+    return a;
+  };
+
+  aggiungi("Maschera in legno intagliato", { tipo_gestione:"UNICO",
+    categoria_uid:cat("Artigianato"), provenienza_uid:prov("Boké"),
+    costo_unitario_acquisto:14, offerta_suggerita:45 }, 1);
+  aggiungi("Tessuto Bazin, taglio da 2 metri", { tipo_articolo:"GREZZO", unita_misura:"m",
+    categoria_uid:cat("Stoffe"), provenienza_uid:prov("Conakry"),
+    costo_unitario_acquisto:6 }, 24);
+  aggiungi("Borsa in stoffa cucita a mano", { categoria_uid:cat("Artigianato"),
+    provenienza_uid:prov("Conakry"), costo_unitario_acquisto:0,
+    offerta_suggerita:22, giacenza_minima:3 }, 8, "CARICO_PRODUZIONE");
+  aggiungi("Calendario GuineAction", { categoria_uid:cat("Calendari"),
+    costo_unitario_acquisto:2.5, offerta_suggerita:10, giacenza_minima:10 }, 60);
+  aggiungi("Collana in perline", { categoria_uid:cat("Artigianato"),
+    provenienza_uid:prov("Kindia"), costo_unitario_acquisto:3, offerta_suggerita:12 }, 15);
+  svuotaCarrello();
+  modificheNonSalvate = true;
+}
+
+/* ==========================================================================
+   17. AVVIO
+   ========================================================================== */
+anagraficheIniziali();
+disegna();
+</script>
+<script>
+/* ==========================================================================
+   18. ADATTAMENTO ANDROID
+   Questa parte esiste solo nella versione installata sul telefono. Aggiunge
+   tre cose che nel prototipo aperto sul computer mancavano:
+     - la memoria: i dati restano fra un avvio e l'altro;
+     - il salvataggio dei file tramite il selettore di sistema;
+     - il tasto indietro del telefono.
+   Il resto dell'applicazione è identico a quello provato sul computer.
+   ========================================================================== */
+(function(){
+  "use strict";
+  const dentroApp = typeof Android !== "undefined" && Android.dentroApp && Android.dentroApp();
+
+  /* ---------- memoria ----------------------------------------------------
+     IndexedDB invece della memoria del browser: non ha il limite dei 5 MB,
+     che con qualche decina di fotografie verrebbe raggiunto in fretta. */
+  const NOME_ARCHIVIO = "bottega-guineaction";
+  let magazzino = null;
+
+  function apriArchivio(){
+    return new Promise((risolvi, rifiuta) => {
+      const r = indexedDB.open(NOME_ARCHIVIO, 1);
+      r.onupgradeneeded = () => r.result.createObjectStore("dati");
+      r.onsuccess = () => risolvi(r.result);
+      r.onerror = () => rifiuta(r.error);
+    });
+  }
+  function leggiArchivio(){
+    return new Promise((risolvi, rifiuta) => {
+      const t = magazzino.transaction("dati", "readonly").objectStore("dati").get("archivio");
+      t.onsuccess = () => risolvi(t.result || null);
+      t.onerror = () => rifiuta(t.error);
+    });
+  }
+  function scriviArchivio(contenuto){
+    return new Promise((risolvi, rifiuta) => {
+      const t = magazzino.transaction("dati", "readwrite").objectStore("dati").put(contenuto, "archivio");
+      t.onsuccess = () => risolvi();
+      t.onerror = () => rifiuta(t.error);
+    });
+  }
+
+  /* Il salvataggio è differito di poco: durante una registrazione con più
+     articoli si scrive una volta sola invece che a ogni riga. */
+  let attesa = null;
+  let ultimoErrore = null;
+  function salvaOra(){
+    if(!magazzino) return;
+    scriviArchivio(JSON.stringify(DB)).then(() => {
+      modificheNonSalvate = false;
+      ultimoErrore = null;
+    }).catch(e => {
+      if(ultimoErrore !== e.name){
+        ultimoErrore = e.name;
+        avvisa("I dati non si stanno salvando sul telefono. Esporta una copia " +
+               "e segnalalo all'amministratore.");
+      }
+    });
+  }
+  /* salvaLocale() viene già chiamata dall'applicazione dopo ogni modifica:
+     qui si aggancia il salvataggio vero. */
+  window.salvaLocale = function(){
+    modificheNonSalvate = true;
+    clearTimeout(attesa);
+    attesa = setTimeout(salvaOra, 600);
+  };
+
+  /* ---------- salvataggio dei file ---------------------------------------
+     Nel browser si usa un collegamento di scaricamento; sul telefono si apre
+     il selettore di sistema, così il volontario sceglie la cartella condivisa. */
+  if(dentroApp){
+    window.scaricaFile = function(nome, contenuto, tipo){
+      try{
+        Android.salvaFile(nome, contenuto, tipo || "application/json");
+      }catch(e){
+        avvisa("Non riesco ad aprire il selettore dei file.");
+      }
+    };
+  }
+
+  /* ---------- tasto indietro --------------------------------------------
+     Restituisce true se ha gestito lui il tasto, false se l'applicazione
+     può essere chiusa. */
+  window.tornaIndietro = function(){
+    if(!document.getElementById("velo").hidden){ chiudiModale(); return true; }
+    if(sezioneCorrente !== "bottega"){ vaiA("bottega"); return true; }
+    return false;
+  };
+
+  /* ---------- avvio ------------------------------------------------------ */
+  apriArchivio().then(m => {
+    magazzino = m;
+    return leggiArchivio();
+  }).then(salvato => {
+    if(salvato){
+      try{
+        const d = JSON.parse(salvato);
+        if(d && d.articoli && d.movimenti){
+          DB = Object.assign(databaseVuoto(), d);
+          svuotaCarrello();
+        }
+      }catch(e){
+        avvisa("L'archivio sul telefono non è leggibile: riparto da vuoto. " +
+               "Se hai una copia, caricala da Dati e sincronizzazione.");
+      }
+    }
+    modificheNonSalvate = false;
+    disegna();
+  }).catch(() => {
+    avvisa("Non riesco ad aprire l'archivio sul telefono: i dati di questa " +
+           "sessione non verranno conservati.");
+  });
+
+  /* Salvataggio anche quando l'app va in secondo piano: su Android il sistema
+     può chiuderla senza preavviso per liberare memoria. */
+  document.addEventListener("visibilitychange", () => {
+    if(document.visibilityState === "hidden" && modificheNonSalvate) salvaOra();
+  });
+
+  /* Dentro l'app non serve l'avviso del browser sulle modifiche non salvate:
+     ci pensa il salvataggio automatico. */
+  if(dentroApp) window.onbeforeunload = null;
+})();
+</script>
+
+</body>
+</html>
